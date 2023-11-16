@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Song Search Results</title>
+    <style>
+        body { 
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+</head>
+<body>
+    <h1>Song Search Results</h1>
+
+    {% if songs %}
+        <div>
+            {% for song in songs %}
+                <div>{{ song.Title }} - Genre: {{ song.Genre }}</div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No songs found.</p>
+    {% endif %}
+
+    <p><a href="/">Go back to the home page</a></p>
+
+</body>
+</html>
