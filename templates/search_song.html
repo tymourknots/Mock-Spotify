@@ -15,7 +15,7 @@
     {% if songs %}
         <div>
             {% for song in songs %}
-                <div>Song: {{ song.title }} - Genre: {{ song.genre }} - Duration: {{song.duration}} - Release Year: {{song.releaseyear}} - Amount Played: {{song.amountplay}}</div>
+                <div>Song: {{ song.title }} - Genre: {{ song.genre }} - Duration: {{song.duration}} seconds - Release Year: {{song.releaseyear}} - Amount Played: {{song.amountplay}} plays</div>
             {% endfor %}
         </div>
     {% else %}
