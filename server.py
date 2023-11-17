@@ -200,7 +200,7 @@ def login():
 def search_song():
     song_title = request.args.get('song_title')
     query = text("SELECT * FROM Song WHERE Title = :song_title")
-    result = engine.connect().execute(query, song_title = song_title).fetchall()
+    result = g.conn.execute(query, {'song_title': song_title}).fetchall()
     return render_template("search_song.html", songs = result)
 
 if __name__ == "__main__":
