@@ -199,8 +199,10 @@ def login():
 @app.route('/search_song')
 def search_song():
     song_title = request.args.get('song_title')
+    print("Received song title: ", song_title)
     query = text("SELECT * FROM song WHERE title = :song_title")
     result = g.conn.execute(query, {'song_title': song_title}).fetchall()
+    print("Query result: ", result)
     return render_template("search_song.html", songs = result)
 
 if __name__ == "__main__":
