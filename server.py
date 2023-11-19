@@ -209,6 +209,24 @@ def search_song():
     result = g.conn.execute(query, {'song_title': song_title}).fetchall()
     return render_template("search_song.html", songs = result)
 
+@app.route('/album/<album_id>')
+def album_details(album_id):
+    album_query = text("""
+                 SELECT albumBelong.*, Artist.Name AS ArtistName, Artist.ArtistID
+                 FROM albumBelong
+                 JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+                 WHERE albumBelong.AlbumID = :album_id
+                 """)
+    album_details = g.conn.execute(album_query, {'album_id': album_id}).fetchone()
+    
+    songs_query = text("""
+                       SELECT song.* FROM song
+                       JOIN contains2 ON song.songID = contains2.songID
+                       WHERE contains2.AlbumID = :album_id
+                       """)
+    songs = g.conn.execute(songs_query, {'album_id': album_id}).fetchall()
+    return render_template('album_details.html', album = album_details, songs = songs)
+
 if __name__ == "__main__":
   import click
 
