@@ -15,14 +15,14 @@
     {% if songs %}
         <div>
             {% for song in songs %}
-                <div>
-                    Song: {{ song.title }} -
-                    Genre: {{ song.genre }} -
-                    Duration: {{ song.duration }} seconds - 
-                    Release Year: {{ song.releaseyear }} - 
-                    Amount Played: {{ song.amountplay }} plays -
-                    Album: <a href="/album/{{ song.AlbumID.strip() }}">Link to Album</a>
-                </div>
+            <div>
+                Song: {{ song[1] }} -  <!-- Access song title by index -->
+                Genre: {{ song[2] }} -  <!-- Access genre by index -->
+                Duration: {{ song[3] }} seconds - 
+                Release Year: {{ song[4] }} - 
+                Amount Played: {{ song[6] }} plays -
+                Album: <a href="/album/{{ song[8].strip() }}">Link to Album</a> <!-- Access album ID by index and strip whitespace -->
+            </div>
             {% endfor %}
         </div>
     {% else %}
