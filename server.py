@@ -233,7 +233,7 @@ def album_details(album_id):
 @app.route('/artist/<artist_id>')
 def artist_details(artist_id):
   artist_query = text("""
-                      SELECT Artist.*, Genre.Name AS GenreName
+                      SELECT Artist.*, Genre.Name AS GenreName, Genre.GenreID
                       FROM Artist
                       JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
                       JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
