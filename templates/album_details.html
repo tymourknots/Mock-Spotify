@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Album Details: {{ album[1] }}</title>
-    <!-- Add your styling and head content here -->
+
 </head>
 <body>
     <h1>Album Details: {{ album[1] }}</h1>
@@ -12,14 +12,13 @@
         <p>Artist: <a href="/artist/{{ album[4].strip() }}">{{ album[5] }}</a></p>
         <p>Release Year: {{ album[2] }}</p>
         <p>Genre: {{ album[3] }}</p>
-        <!-- Add more album details if necessary -->
+
     </div>
 
     <h2>Songs in this Album</h2>
     <div>
         {% for song in songs %}
             <div>{{ song[1] }} - Duration: {{ song[3] }} seconds</div>
-            <!-- Add more song details if desired -->
         {% else %}
             <p>No songs found in this album.</p>
         {% endfor %}
