@@ -10,7 +10,7 @@
     <div>
         <p>Name: {{ artist[1] }}</p> <!-- Replace with the correct index -->
         <p>Biography: {{ artist[3] }}</p> <!-- Replace with the correct index -->
-        <p>Genre: {{ artist[5] }}</p> <!-- Replace with the correct index for GenreName -->
+        <p>Genre: <a href="/genre/{{ artist[4].strip() }}">{{ artist[3] }}</a></p> 
 
     </div>
 

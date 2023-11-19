@@ -249,6 +249,14 @@ def artist_details(artist_id):
   print("Albums by artist:", albums)
   return render_template('artist_details.html', artist = artist_details, albums = albums)
 
+@app.route('/genre/<genre_id>')
+def genre_details(genre_id):
+  genre_query = text("""
+                     SELECT * FROM Genre WHERE GenreID = :genre_id
+                      """)
+  genre_details = g.conn.execute(genre_query, {'genre_id': genre_id}).fetchone()
+  return render_template('genre_details.html', genre = genre_details)
+
 if __name__ == "__main__":
   import click
 
