@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Artist Details: {{ artist[1] }}</title> <!-- Assuming artist name is at index 1 -->
+
+</head>
+<body>
+    <h1>Artist Details: {{ artist[1] }}</h1> <!-- Replace with the correct index -->
+
+    <div>
+        <p>Name: {{ artist[1] }}</p> <!-- Replace with the correct index -->
+        <p>Biography: {{ artist[3] }}</p> <!-- Replace with the correct index -->
+        <p>Genre: {{ artist[5] }}</p> <!-- Replace with the correct index for GenreName -->
+
+    </div>
+
+    <h2>Albums by this Artist</h2>
+    <div>
+        {% for album in albums %}
+            <div>{{ album[1] }} - Release Year: {{ album[2] }}</div> <!-- Replace indices as appropriate -->
+
+        {% else %}
+            <p>No albums found for this artist.</p>
+        {% endfor %}
+    </div>
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>

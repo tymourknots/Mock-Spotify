@@ -230,6 +230,25 @@ def album_details(album_id):
     print("Songs in album:", songs)  # In the album_details route
     return render_template('album_details.html', album = album_details, songs = songs)
 
+@app.route('/artist/<artist_id>')
+def artist_details(artist_id):
+  artist_query = text("""
+                      SELECT Artist.*, Genre.Name AS GenreName
+                      FROM Artist
+                      JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+                      JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
+                      WHERE Artist.ArtistID = :artist_id
+                      """)
+  artist_details = g.conn.execute(artist_query, {'artist_id': artist_id}).fetchone()
+  print("Artist details:", artist_details)
+
+  albums_query = text("""
+                      SELECT * FROM albumBelong WHERE ArtistID = :artist_id
+                      """)
+  albums = g.conn.execute(albums_query, {'artist_id': artist_id}).fetchall()
+  print("Albums by artist:", albums)
+  return render_template('artist_details.html', artist = artist_details, albums = albums)
+
 if __name__ == "__main__":
   import click
 
