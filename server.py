@@ -255,7 +255,20 @@ def genre_details(genre_id):
                      SELECT * FROM Genre WHERE GenreID = :genre_id
                       """)
   genre_details = g.conn.execute(genre_query, {'genre_id': genre_id}).fetchone()
-  return render_template('genre_details.html', genre = genre_details)
+
+  artists_query = text("""
+                        SELECT Artist.* FROM Artist
+                        JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+                        WHERE belongsTo2.GenreID = :genre_id
+                        """)
+  artists = g.conn.execute(artists_query, {'genre_id': genre_id}).fetchall()
+
+  albums_query = text("""
+                      SELECT albumBelong.* FROM albumBelong
+                      WHERE albumBelong.Genre = (SELECT Name FROM Genre WHERE GenreID = :genre_id)
+                      """)
+  albums = g.conn.execute(albums_query, {'genre_id': genre_id}).fetchall()
+  return render_template('genre_details.html', genre = genre_details, artists= artists, albums = albums)
 
 if __name__ == "__main__":
   import click
