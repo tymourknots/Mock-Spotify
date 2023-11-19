@@ -18,7 +18,8 @@
     <h2>Songs in this Album</h2>
     <div>
         {% for song in songs %}
-            <div><a href="/song/{{ song[0].strip() }}">{{ song[1] }}</a> - Duration: {{ song[3] }} seconds</div>
+            <div><a href="/search_song?song_id={{ song[0].strip() }}">{{ song[1] }}</a> - Duration: {{ song[3] }} seconds</div>
+        {% endfor %}
         {% else %}
             <p>No songs found in this album.</p>
         {% endfor %}
