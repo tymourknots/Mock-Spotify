@@ -204,7 +204,7 @@ def search_song():
                  FROM song
                  JOIN contains2 ON song.songID = contains2.songID
                  JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                 WHERE song.tile = :song_title
+                 WHERE song.title = :song_title
                  """)
     result = g.conn.execute(query, {'song_title': song_title}).fetchall()
     return render_template("search_song.html", songs = result)
