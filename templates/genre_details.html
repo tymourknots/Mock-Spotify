@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Genre Details: {{ genre.Name }}</title>
-
+    <title>Genre Details: {{ genre[1] }}</title> 
 </head>
 <body>
-    <h1>Genre Details: {{ genre.Name }}</h1>
+    <h1>Genre Details: {{ genre[1] }}</h1> 
 
     <div>
-        <p>Name: {{ genre.Name }}</p>
-        <p>Description: {{ genre.Description }}</p>
+        <p>Name: {{ genre[1] }}</p> 
+        <p>Description: {{ genre[2] }}</p> 
     </div>
 
     <h2>Artists in this Genre</h2>
     <div>
         {% for artist in artists %}
-            <div><a href="/artist/{{ artist.ArtistID.strip() }}">{{ artist.Name }}</a></div>
+            <!-- Adjust indices based on the actual structure of artist tuple -->
+            <div><a href="/artist/{{ artist[0].strip() }}">{{ artist[1] }}</a></div>
         {% else %}
             <p>No artists found in this genre.</p>
         {% endfor %}
@@ -24,7 +24,8 @@
     <h2>Albums in this Genre</h2>
     <div>
         {% for album in albums %}
-            <div><a href="/album/{{ album.AlbumID.strip() }}">{{ album.Title }}</a></div>
+            <!-- Adjust indices based on the actual structure of album tuple -->
+            <div><a href="/album/{{ album[0].strip() }}">{{ album[1] }}</a></div>
         {% else %}
             <p>No albums found in this genre.</p>
         {% endfor %}
