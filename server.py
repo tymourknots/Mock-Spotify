@@ -208,8 +208,6 @@ def search_song():
                  """)
     result = g.conn.execute(query, {'song_title': song_title}).fetchall()
     print("Songs query result:", result)  # In the search_song route
-    print("Album details:", album_details)  # In the album_details route
-    print("Songs in album:", songs)  # In the album_details route
     return render_template("search_song.html", songs = result)
 
 @app.route('/album/<album_id>')
@@ -228,7 +226,6 @@ def album_details(album_id):
                        WHERE contains2.AlbumID = :album_id
                        """)
     songs = g.conn.execute(songs_query, {'album_id': album_id}).fetchall()
-    print("Songs query result:", result)  # In the search_song route
     print("Album details:", album_details)  # In the album_details route
     print("Songs in album:", songs)  # In the album_details route
     return render_template('album_details.html', album = album_details, songs = songs)
