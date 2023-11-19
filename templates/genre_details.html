@@ -14,7 +14,7 @@
     <h2>Artists in this Genre</h2>
     <div>
         {% for artist in artists %}
-            <!-- Adjust indices based on the actual structure of artist tuple -->
+
             <div><a href="/artist/{{ artist[0].strip() }}">{{ artist[1] }}</a></div>
         {% else %}
             <p>No artists found in this genre.</p>
@@ -24,7 +24,7 @@
     <h2>Albums in this Genre</h2>
     <div>
         {% for album in albums %}
-            <!-- Adjust indices based on the actual structure of album tuple -->
+
             <div><a href="/album/{{ album[0].strip() }}">{{ album[1] }}</a></div>
         {% else %}
             <p>No albums found in this genre.</p>

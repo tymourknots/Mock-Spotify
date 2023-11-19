@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Artist Details: {{ artist[1] }}</title> <!-- Assuming artist name is at index 1 -->
+    <title>Artist Details: {{ artist[1] }}</title> 
 
 </head>
 <body>
-    <h1>Artist Details: {{ artist[1] }}</h1> <!-- Replace with the correct index -->
+    <h1>Artist Details: {{ artist[1] }}</h1> 
 
     <div>
-        <p>Name: {{ artist[1] }}</p> <!-- Replace with the correct index -->
-        <p>Biography: {{ artist[3] }}</p> <!-- Replace with the correct index -->
+        <p>Name: {{ artist[1] }}</p> 
+        <p>Biography: {{ artist[3] }}</p> 
         <p>Genre: <a href="/genre/{{ artist[4].strip() }}">{{ artist[3] }}</a></p> 
 
     </div>
@@ -17,8 +17,7 @@
     <h2>Albums by this Artist</h2>
     <div>
         {% for album in albums %}
-            <div>{{ album[1] }} - Release Year: {{ album[2] }}</div> <!-- Replace indices as appropriate -->
-
+            <div><a href="/album/{{ album[0].strip() }}">{{ album[1] }}</a> - Release Year: {{ album[2] }}</div>
         {% else %}
             <p>No albums found for this artist.</p>
         {% endfor %}

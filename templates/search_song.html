@@ -1,35 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Song Search Results</title>
-    <style>
-        body { 
-            font-size: 15pt;
-            font-family: arial;
-        }
-    </style>
+    <title>Song Details: {{ song[1] }}</title>
 </head>
 <body>
-    <h1>Song Search Results</h1>
+    <h1>Song Details: {{ song[1] }}</h1>
 
     {% if songs %}
-        <div>
-            {% for song in songs %}
+        {% for song in songs %}
             <div>
-                Song: {{ song[1] }} -  <!-- Access song title by index -->
-                Genre: {{ song[2] }} -  <!-- Access genre by index -->
-                Duration: {{ song[3] }} seconds - 
-                Release Year: {{ song[4] }} - 
-                Amount Played: {{ song[6] }} plays -
-                Album: <a href="/album/{{ song[8].strip() }}">Link to Album</a> <!-- Access album ID by index and strip whitespace -->
+                <p>Title: {{ song[1] }}</p>
+                <p>Genre: {{ song[2] }}</p>
+                <p>Duration: {{ song[3] }} seconds</p>
+                <p>Release Year: {{ song[4] }}</p>
+                <p>Amount Played: {{ song[6] }} plays</p>
+                <p>Album: <a href="/album/{{ song[8].strip() }}">{{ song[7] }}</a></p>
             </div>
-            {% endfor %}
-        </div>
+        {% endfor %}
     {% else %}
         <p>No songs found.</p>
     {% endif %}
 
     <p><a href="/">Go back to the home page</a></p>
-
 </body>
 </html>
