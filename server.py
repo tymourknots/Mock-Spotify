@@ -282,8 +282,8 @@ def genre_details(genre_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
 
         user_query = text("SELECT * FROM Users WHERE UserName = :username AND Password = :password")
         user = g.conn.execute(user_query, {'username': username, 'password': password}).fetchone()
@@ -292,7 +292,8 @@ def login():
             session['username'] = username  
             return redirect(url_for('index'))
         else:
-            return "Login Failed", 401
+            flash('Invalid username or password')
+            return redirect(url_for('login'))
 
     return render_template('login.html')
 
