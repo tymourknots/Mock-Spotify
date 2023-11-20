@@ -193,12 +193,6 @@ def add():
   g.conn.commit()
   return redirect('/')
 
-
-@app.route('/login')
-def login():
-    abort(401)
-    this_is_never_executed()
-
 @app.route('/search_song')
 def search_song():
     song_title = request.args.get('song_title')
