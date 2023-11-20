@@ -7,15 +7,13 @@
     </style>
 </head>
 <body>
-    <h1>User Profile: {{ user.UserName }}</h1>
-
+    <h1>User Profile</h1>
     <div>
-        <p><strong>Username:</strong> {{ user.UserName }}</p>
-        <p><strong>Email:</strong> {{ user.Email }}</p>
-        <!-- You can add more user details here if available -->
+        <p>User ID: {{ user[0] }}</p>
+        <p>Username: {{ user[1] }}</p>
+        <p>Email: {{ user[2] }}</p>
+        <!-- Password is typically not displayed -->
     </div>
-
     <p><a href="/">Go back to the home page</a></p>
-    <p><a href="/logout">Logout</a></p>
 </body>
 </html>
