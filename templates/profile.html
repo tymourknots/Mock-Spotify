@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Profile: {{ user[1] }}</title> <!-- Assuming user name is at index 1 -->
+    <title>Profile: {{ user[1] }}</title>
 </head>
 <body>
-    <h1>Profile: {{ user[1] }}</h1> <!-- Display the user's name -->
+    <h1>Profile: {{ user[1] }}</h1>
 
     <div>
-        <p>User Name: {{ user[1] }}</p> <!-- Display the user's name -->
-        <p>Email: {{ user[2] }}</p> <!-- Display the user's email -->
-        <!-- Add more user details if necessary -->
+        <p>User Name: {{ user[1] }}</p>
+        <p>Email: {{ user[2] }}</p>
     </div>
 
     <h2>Songs Listened to</h2>
@@ -18,12 +17,11 @@
             {% for song in songs %}
                 <div>
                     <a href="/search_song?song_title={{ song[1] }}">{{ song[1] }}</a> - Genre: {{ song[2] }}
-                    <!-- Other song details can be added here if necessary -->
                 </div>
             {% endfor %}
         {% else %}
             <p>No songs found.</p>
-        {% endfor %}
+        {% endif %}
     </div>
 
     <p><a href="/">Go back to the home page</a></p>
