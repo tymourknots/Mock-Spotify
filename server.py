@@ -314,7 +314,15 @@ def profile(username):
                                    JOIN ListensTo ON Song.songID = ListensTo.songID
                                    WHERE ListensTo.userID = :user_id
                                    """)
-            listened_songs = g.conn.execute(listens_to_query, {'user_id': user[0]}).fetchall()  # Assuming userID is at index 0
+            listened_songs = g.conn.execute(listens_to_query, {'user_id': user[0]}).fetchall()  
+
+            followed_artists_query = text("""
+                                          SELECT Artist.*, Follows.FollowDate
+                                          FROM Follows
+                                          JOIN Artist ON Follows.ArtistID = Artist.ArtistID
+                                          WHERE Follows.userID = :user_id
+                                          """)
+            followed_artists = g.conn.execute(followed_artists_query, {'user_id': user[0]}).fetchall()
 
             return render_template('profile.html', user=user, songs=listened_songs)
         else:
