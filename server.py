@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort, session, url_for, flash
+from flask import Flask, request, render_template, g, redirect, Response, abort, session, url_for
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -292,7 +292,6 @@ def login():
             session['username'] = username  
             return redirect(url_for('index'))
         else:
-            flash('Invalid username or password')
             return redirect(url_for('login'))
 
     return render_template('login.html')
