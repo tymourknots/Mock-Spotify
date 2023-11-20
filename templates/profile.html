@@ -1,19 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User Profile</title>
-    <style>
-        body { font-size: 15pt; font-family: arial; }
-    </style>
+    <title>Profile: {{ user[1] }}</title> <!-- Assuming user name is at index 1 -->
 </head>
 <body>
-    <h1>User Profile</h1>
+    <h1>Profile: {{ user[1] }}</h1> <!-- Display the user's name -->
+
     <div>
-        <p>User ID: {{ user[0] }}</p>
-        <p>Username: {{ user[1] }}</p>
-        <p>Email: {{ user[2] }}</p>
-        <!-- Password is typically not displayed -->
+        <p>User Name: {{ user[1] }}</p> <!-- Display the user's name -->
+        <p>Email: {{ user[2] }}</p> <!-- Display the user's email -->
+        <!-- Add more user details if necessary -->
     </div>
+
+    <h2>Songs Listened to</h2>
+    <div>
+        {% if songs %}
+            {% for song in songs %}
+                <div>
+                    <a href="/search_song?song_title={{ song[1] }}">{{ song[1] }}</a> - Genre: {{ song[2] }}
+                    <!-- Other song details can be added here if necessary -->
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No songs found.</p>
+        {% endfor %}
+    </div>
+
     <p><a href="/">Go back to the home page</a></p>
+    <p><a href="/logout">Logout</a></p>
 </body>
 </html>

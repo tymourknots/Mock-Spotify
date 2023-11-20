@@ -308,12 +308,19 @@ def profile(username):
         user = g.conn.execute(user_query, {'username': username}).fetchone()
 
         if user:
-            return render_template('profile.html', user=user)
+            # Fetch the list of songs the user listens to
+            listens_to_query = text("""
+                                   SELECT Song.* FROM Song
+                                   JOIN ListensTo ON Song.songID = ListensTo.songID
+                                   WHERE ListensTo.userID = :user_id
+                                   """)
+            listened_songs = g.conn.execute(listens_to_query, {'user_id': user[0]}).fetchall()  # Assuming userID is at index 0
+
+            return render_template('profile.html', user=user, songs=listened_songs)
         else:
             return "User not found", 404
     else:
         return redirect(url_for('login'))
-
 
 if __name__ == "__main__":
   import click
