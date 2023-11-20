@@ -12,7 +12,10 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort
+from flask import Flask, request, render_template, g, redirect, Response, abort, session
+
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -284,6 +287,42 @@ def genre_details(genre_id):
                       """)
   albums = g.conn.execute(albums_query, {'genre_id': genre_id}).fetchall()
   return render_template('genre_details.html', genre = genre_details, artists= artists, albums = albums)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user_query = text("SELECT * FROM Users WHERE UserName = :username AND Password = :password")
+        user = g.conn.execute(user_query, {'username': username, 'password': password}).fetchone()
+
+        if user:
+            session['username'] = username  
+            return redirect(url_for('index'))
+        else:
+            return "Login Failed", 401
+
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)  # Remove the username from the session
+    return redirect(url_for('index'))
+
+@app.route('/profile/<username>')
+def profile(username):
+    if 'username' in session and session['username'] == username:
+        user_query = text("SELECT * FROM Users WHERE UserName = :username")
+        user = g.conn.execute(user_query, {'username': username}).fetchone()
+
+        if user:
+            return render_template('profile.html', user=user)
+        else:
+            return "User not found", 404
+    else:
+        return redirect(url_for('login'))
+
 
 if __name__ == "__main__":
   import click

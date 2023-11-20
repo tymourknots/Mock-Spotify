@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Profile</title>
+    <style>
+        body { font-size: 15pt; font-family: arial; }
+    </style>
+</head>
+<body>
+    <h1>User Profile: {{ user.UserName }}</h1>
+
+    <div>
+        <p><strong>Username:</strong> {{ user.UserName }}</p>
+        <p><strong>Email:</strong> {{ user.Email }}</p>
+        <!-- You can add more user details here if available -->
+    </div>
+
+    <p><a href="/">Go back to the home page</a></p>
+    <p><a href="/logout">Logout</a></p>
+</body>
+</html>

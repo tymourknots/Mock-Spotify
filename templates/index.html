@@ -1,33 +1,27 @@
+<!DOCTYPE html>
 <html>
-  <style>
-    body{ 
-      font-size: 15pt;
-      font-family: arial;
-    }
-  </style>
-
+<head>
+    <style>
+        body { 
+            font-size: 15pt; 
+            font-family: arial;
+        }
+    </style>
+</head>
 
 <body>
-  <h1>Some famous Computer Scientists</h1>
-  <div>{{data}}</div>
+    <h1>Wannabe Spotify</h1>
 
-  <div>
-    {% for n in data %}
-    <div>{{n}}</div>
-    {% endfor %}
-  </div>
+    <!-- Song Search Form -->
+    <form method="get" action="/search_song">
+        <p>Search for a song: <input type="text" name="song_title"> <input type="submit" value="Search"></p>
+    </form>
 
-<p><a href="another">Go to the other page</a></p>
-
-<form method="POST" action="/add">
-<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
-</form>
-
-<form method="get" action="/search_song">
-<p>Search for a song: <input type="text" name="song_title"> <input type="submit" value="Search"></p>
-</form>
-
+    <!-- Conditional Button: Login or Profile based on session -->
+    {% if session['username'] %}
+        <p>Welcome, {{ session['username'] }}! <a href="/profile/{{ session['username'] }}">Profile</a> | <a href="/logout">Logout</a></p>
+    {% else %}
+        <p><a href="/login">Login</a></p>
+    {% endif %}
 </body>
-
-
 </html>
