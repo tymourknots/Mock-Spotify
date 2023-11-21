@@ -21,7 +21,7 @@
                 <div>
                     {% if playlists %}
                         {% for playlist in playlists %}
-                            <p><a href="/playlist/{{ playlist[0].strip() }}">{{ playlist[1] }}</a></p>
+                            <p><a href="/playlist/{{ playlist[1].strip() }}">{{ playlist[1] }}</a></p>
                         {% endfor %}
                     {% else %}
                         <p>This song is not in any playlists.</p>

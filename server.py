@@ -224,6 +224,8 @@ def search_song():
     playlists = g.conn.execute(playlist_query, {'song_id': song_id}).fetchall()
     print("Songs query result:", result)
     print("Playlists containing song:", playlists)
+    print("Received song ID:", song_id)
+    print("Playlists for song ID", song_id, ":", playlists)
     return render_template("search_song.html", songs=result, playlists=playlists)
 
 @app.route('/album/<album_id>')
