@@ -235,6 +235,24 @@ def search_song():
     print("Playlists containing song:", playlists)
     return render_template("search_song.html", songs=result, playlists=playlists)
 
+@app.route('/search_album')
+def search_album():
+    album_title = request.args.get('album_title')
+
+    if album_title:
+        query = text("""
+                     SELECT albumBelong.*, Artist.Name AS ArtistName
+                     FROM albumBelong
+                     JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+                     WHERE Title ILIKE :album_title
+                     """)
+        result = g.conn.execute(query, {'album_title': f'%{album_title}%'}).fetchall()
+    else:
+        result = []
+
+    print("Albums query result:", result)
+    return render_template("search_album.html", albums=result)
+
 
 @app.route('/album/<album_id>')
 def album_details(album_id):
