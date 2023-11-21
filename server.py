@@ -341,11 +341,25 @@ def profile(username):
                                           """)
             followed_artists = g.conn.execute(followed_artists_query, {'user_id': user[0]}).fetchall()
 
+            created_playlists_query = text("""
+                                           SELECT Playlist.* FROM Playlist
+                                           JOIN CreateORFollow ON Playlist.PlaylistID = CreateORFollow.PlaylistID
+                                           WHERE CreateORFollow.userID = :user_id AND CreateORFollow.Creates = TRUE
+                                            """)
+            created_playlists = g.conn.execute(created_playlists_query, {'user_id': user[0]}).fetchall()
+
+            followed_playlists_query = text("""
+                                            SELECT Playlist.* FROM Playlist
+                                            JOIN CreateORFollow ON Playlist.PlaylistID = CreateORFollow.PlaylistID
+                                            WHERE CreateORFollow.userID = :user_id AND CreateORFollow.Creates = FALSE
+                                            """)
+            followed_playlists = g.conn.execute(followed_playlists_query, {'user_id': user[0]}).fetchall()
+
                         # Print statements for debugging
             print("User:", user)
             print("Listened songs:", listened_songs)
             print("Followed artists:", followed_artists)
-            return render_template('profile.html', user=user, songs=listened_songs, artists=followed_artists)
+            return render_template('profile.html', user=user, songs=listened_songs, artists=followed_artists, created_playlists=created_playlists, followed_playlists=followed_playlists)
         else:
             return "User not found", 404
     else:

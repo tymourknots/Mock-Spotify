@@ -37,6 +37,30 @@
         {% endif %}
     </div>
 
+        <!-- Section for playlists created by the user -->
+    <h2>Playlists you have created:</h2>
+    <div>
+        {% if created_playlists %}
+            {% for playlist in created_playlists %}
+                <div><a href="/playlist/{{ playlist[0].strip() }}">{{ playlist[1] }}</a></div>
+            {% endfor %}
+        {% else %}
+            <p>You have not created any playlists.</p>
+        {% endif %}
+    </div>
+    
+        <!-- Section for playlists followed by the user -->
+    <h2>Playlists you follow:</h2>
+    <div>
+        {% if followed_playlists %}
+            {% for playlist in followed_playlists %}
+                <div><a href="/playlist/{{ playlist[0].strip() }}">{{ playlist[1] }}</a></div>
+            {% endfor %}
+        {% else %}
+            <p>You are not following any playlists.</p>
+        {% endif %}
+    </div>
+
     <p><a href="/">Go back to the home page</a></p>
     <p><a href="/logout">Logout</a></p>
 </body>
