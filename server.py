@@ -417,6 +417,23 @@ def profile(username):
         return redirect(url_for('login'))
     
 
+@app.route('/search_playlist')
+def search_playlist():
+    playlist_title = request.args.get('playlist_title')
+
+    if playlist_title:
+        query = text("""
+                     SELECT * FROM Playlist
+                     WHERE Title ILIKE :playlist_title
+                     """)
+        result = g.conn.execute(query, {'playlist_title': f'%{playlist_title}%'}).fetchall()
+    else:
+        result = []
+
+    print("Playlists query result:", result)
+    return render_template("search_playlist.html", playlists=result)
+
+
 @app.route('/playlist/<playlist_id>')
 def playlist_details(playlist_id):
     playlist_query = text("""

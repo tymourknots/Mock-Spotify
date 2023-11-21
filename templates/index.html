@@ -29,6 +29,10 @@
         <p>Search for a genre: <input type="text" name="genre_name" placeholder="Search for a genre"> <input type="submit" value="Search"></p>
     </form>
     
+    <form method="get" action="/search_playlist">
+        <p>Search for a playlist: <input type="text" name="playlist_title" placeholder="Search for a playlist"> <input type="submit" value="Search"></p>
+    </form>
+    
 
     <!-- Conditional Button: Login or Profile based on session -->
     {% if session['username'] %}
