@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Playlist Recommendations</title>
+</head>
+<body>
+    <h1>Playlist Recommendations</h1>
+
+    <div>
+        {% if playlists %}
+            {% for playlist in playlists %}
+                <div>
+                    <a href="/playlist/{{ playlist[0].strip() }}">{{ playlist[1] }}</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No playlist recommendations found.</p>
+        {% endif %}
+    </div>
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>
