@@ -195,50 +195,40 @@ def search_song():
     song_title = request.args.get('song_title')
     song_id = request.args.get('song_id')
 
-    # Initialize variables
     result = []
     playlists = []
 
-    if song_id:
-        # Fetch song details by song ID
+    if song_id or song_title:
+        # Fetch song, album, artist, and genre details
         query = text("""
-                 SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID, 
-                        albumBelong.Title AS AlbumTitle, albumBelong.AlbumID
+                 SELECT Song.*, albumBelong.Title AS AlbumTitle, albumBelong.AlbumID, 
+                        Artist.Name AS ArtistName, Artist.ArtistID, Genre.Name AS GenreName, Genre.GenreID
                  FROM Song
                  JOIN contains2 ON Song.songID = contains2.songID
                  JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
                  JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-                 WHERE Song.songID = :song_id
+                 JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+                 JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
+                 WHERE Song.songID = :song_id OR Song.title = :song_title
                  """)
-        result = g.conn.execute(query, {'song_id': song_id}).fetchall()
-    
-    elif song_title:
-        # Fetch song details by song title
-        query = text("""
-                 SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID, 
-                        albumBelong.Title AS AlbumTitle, albumBelong.AlbumID
-                 FROM Song
-                 JOIN contains2 ON Song.songID = contains2.songID
-                 JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                 JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-                 WHERE Song.title = :song_title
-                 """)
-        result = g.conn.execute(query, {'song_title': song_title}).fetchall()
-        if result:
-            song_id = result[0][0]  # Extract the song ID from the search results
+        result = g.conn.execute(query, {'song_id': song_id, 'song_title': song_title}).fetchall()
 
-    # Fetch playlist details if song ID is available
-    if song_id:
-        playlist_query = text("""
-                              SELECT Playlist.* FROM Playlist
-                              JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
-                              WHERE contains1.songID = :song_id
-                              """)
-        playlists = g.conn.execute(playlist_query, {'song_id': song_id}).fetchall()
+        if result and not song_id:
+            song_id = result[0][0]  # Extract the song ID from the first result if searching by title
+
+        # Fetch playlists containing the song
+        if song_id:
+            playlist_query = text("""
+                                  SELECT Playlist.* FROM Playlist
+                                  JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
+                                  WHERE contains1.songID = :song_id
+                                  """)
+            playlists = g.conn.execute(playlist_query, {'song_id': song_id}).fetchall()
 
     print("Songs query result:", result)
     print("Playlists containing song:", playlists)
     return render_template("search_song.html", songs=result, playlists=playlists)
+
 
 @app.route('/search_album')
 def search_album():
