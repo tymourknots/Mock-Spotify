@@ -494,18 +494,23 @@ def recommend_playlists(user_id):
     # Convert followed artists to a list of artist IDs
     artist_ids = [artist[0] for artist in followed_artists]
 
+    if not artist_ids:
+        return "No artists followed, so no playlist recommendations available."
+
     # Step 2: Fetch playlists that contain songs by these artists
     playlist_query = text("""
-                          SELECT DISTINCT Playlist.PlaylistID, Playlist.Title
-                          FROM Playlist
-                          JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
-                          JOIN Song ON contains1.songID = Song.songID
-                          WHERE Song.ArtistID IN :artist_ids
-                          """)
+        SELECT DISTINCT Playlist.PlaylistID, Playlist.Title
+        FROM Playlist
+        JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
+        JOIN contains2 ON contains1.songID = contains2.songID
+        JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+        WHERE albumBelong.ArtistID IN :artist_ids
+    """)
     playlists = g.conn.execute(playlist_query, {'artist_ids': tuple(artist_ids)}).fetchall()
 
     # Step 3: Present the recommended playlists to the user
     return render_template('recommend_playlists.html', playlists=playlists)
+
 
 
 
