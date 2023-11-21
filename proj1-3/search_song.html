@@ -1,0 +1,38 @@
+<html>
+<head>
+    <title>Song Search Results</title>
+</head>
+<body>
+    <h1>Song Search Results</h1>
+
+    {% if songs %}
+        {% for song in songs %}
+            <div>
+                <p>Title: {{ song[1] }}</p>
+                <p>Album: <a href="/album/{{ song[10].strip() }}">{{ song[9] }}</a></p>
+                <p>Artist: <a href="/artist/{{ song[8] }}">{{ song[7] }}</a></p>
+                <p>Genre: <a href="/search_g/{{ song[-1] }}">{{ song[-1] }}</a></p>
+                <p>Duration: {{ song[3] }} seconds</p>
+                <p>Release Year: {{ song[4] }}</p>
+                <p>Amount Played: {{ song[6] }} plays</p>
+
+
+                <h3>Playlists containing this song:</h3>
+                <div>
+                    {% if playlists %}
+                        {% for playlist in playlists %}
+                            <p><a href="/playlist/{{ playlist[0].strip() }}">{{ playlist[1] }}</a></p>
+                        {% endfor %}
+                    {% else %}
+                        <p>This song is not in any playlists.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No songs found.</p>
+    {% endif %}
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>

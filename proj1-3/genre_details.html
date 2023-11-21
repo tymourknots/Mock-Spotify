@@ -1,0 +1,48 @@
+<html>
+<head>
+    <title>Genre Details: {{ genre[1] }}</title> 
+</head>
+<body>
+    <h1>Genre Details: {{ genre[1] }}</h1>
+
+    <div>
+        <p>Name: {{ genre[1] }}</p>
+        <p>Description: {{ genre[2] }}</p>
+    </div>
+
+    <h2>Artists in this Genre</h2>
+    <div>
+        {% if artists %}
+            {% for artist in artists %}
+                <div><a href="/artist/{{ artist[0].strip() }}">{{ artist[1] }}</a></div>
+            {% endfor %}
+        {% else %}
+            <p>No artists found in this genre.</p>
+        {% endif %}
+    </div>
+
+    <h2>Albums in this Genre</h2>
+    <div>
+        {% if albums %}
+            {% for album in albums %}
+                <div><a href="/album/{{ album[0].strip() }}">{{ album[1] }}</a></div>
+            {% endfor %}
+        {% else %}
+            <p>No albums found in this genre.</p>
+        {% endif %}
+    </div>
+
+    <h2>Songs in this Genre</h2>
+    <div>
+        {% if songs %}
+            {% for song in songs %}
+                <div><a href="/search_song?song_id={{ song[0].strip() }}">{{ song[1] }}</a> - Duration: {{ song[3] }} seconds</div>
+            {% endfor %}
+        {% else %}
+            <p>No songs found in this genre.</p>
+        {% endif %}
+    </div>
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>

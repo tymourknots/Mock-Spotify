@@ -1,0 +1,69 @@
+<html>
+<head>
+    <title>Profile: {{ user[1] }}</title> 
+<body>
+    <h1>Profile: {{ user[1] }}</h1>
+
+    <div>
+        <p>User Name: {{ user[1] }}</p>
+        <p>Email: {{ user[2] }}</p>
+        <p>Password: {{user[3]}}</p>
+    </div>
+
+    <h2>Songs Listened to</h2>
+    <div>
+        {% if songs %}
+            {% for song in songs %}
+                <div>
+                    <a href="/search_song?song_title={{ song[1] }}">{{ song[1] }}</a> - Genre: {{ song[2] }}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No songs found.</p>
+        {% endif %}
+    </div>
+
+    <h2>Artists Followed</h2>
+    <div>
+        {% if artists %}
+            {% for artist in artists %}
+                <div>
+                    <a href="/artist/{{ artist[0].strip() }}">{{ artist[1] }}</a> - Followed Since: {{ artist[-1] }}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No artists followed.</p>
+        {% endif %}
+    </div>
+
+    <h2>Playlists you have created:</h2>
+    <div>
+        {% if created_playlists %}
+            {% for playlist in created_playlists %}
+                <div><a href="/playlist/{{ playlist[0].strip() }}">{{ playlist[1] }}</a></div>
+            {% endfor %}
+        {% else %}
+            <p>You have not created any playlists.</p>
+        {% endif %}
+    </div>
+    
+    <h2>Playlists you follow:</h2>
+    <div>
+        {% if followed_playlists %}
+            {% for playlist in followed_playlists %}
+                <div><a href="/playlist/{{ playlist[0].strip() }}">{{ playlist[1] }}</a></div>
+            {% endfor %}
+        {% else %}
+            <p>You are not following any playlists.</p>
+        {% endif %}
+    </div>
+    <h2>Recommendations:</h2>
+    <p><a href="/recommendations/{{ user[0].strip() }}">Recommend Me Songs!</a></p>
+    <p><a href="/recommend_artists/{{ user[0].strip() }}">Recommend Me Artists!</a></p>
+    <p><a href="/recommend_playlists/{{ user[0].strip() }}">Recommend Me Playlists!</a></p>
+    
+    <h2>Home:</h2>
+    <p><a href="/">Go back to the home page</a></p>
+    <p><a href="/logout">Logout</a></p>
+</body>
+</html>

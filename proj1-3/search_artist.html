@@ -1,0 +1,23 @@
+<html>
+<head>
+    <title>Artist Search Results</title>
+</head>
+<body>
+    <h1>Artist Search Results</h1>
+
+    {% if artists %}
+        {% for artist in artists %}
+            <div>
+                <p>Name: {{ artist[1].strip() }}</p>
+                <p>Biography: {{ artist[2] }}</p>
+                <p><a href="/artist/{{ artist[0].strip() }}">View Artist Profile</a></p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No artists found.</p>
+    {% endif %}
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>
+

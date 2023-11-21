@@ -1,0 +1,22 @@
+<html>
+<head>
+    <title>Genre Search Results</title>
+</head>
+<body>
+    <h1>Genre Search Results</h1>
+
+    {% if genres %}
+        {% for genre in genres %}
+            <div>
+                <p>Name: {{ genre[1].strip() }}</p>
+                <p>Description: {{ genre[2].strip() }}</p>
+                <p><a href="/genre/{{ genre[0].strip() }}">View Genre Details</a></p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No genres found.</p>
+    {% endif %}
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>

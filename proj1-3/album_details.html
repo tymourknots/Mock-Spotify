@@ -1,0 +1,28 @@
+<html>
+<head>
+    <title>Album Details: {{ album[1] }}</title>
+</head>
+<body>
+    <h1>Album Details: {{ album[1] }}</h1>
+
+    <div>
+        <p>Title: {{ album[1] }}</p>
+        <p>Artist: <a href="/artist/{{ album[4].strip() }}">{{ album[5] }}</a></p>
+        <p>Release Year: {{ album[2] }}</p>
+        <p>Genre: <a href="/genre/{{ album[4].strip() }}">{{ album[3] }}</a></p>
+    </div>
+
+    <h2>Songs in this Album</h2>
+    {% if songs %}
+        <div>
+            {% for song in songs %}
+                <div><a href="/search_song?song_id={{ song[0].strip() }}">{{ song[1] }}</a> - Duration: {{ song[3] }} seconds</div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No songs found in this album.</p>
+    {% endif %}
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>

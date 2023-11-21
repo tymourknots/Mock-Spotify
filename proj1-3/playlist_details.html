@@ -1,0 +1,49 @@
+<html>
+<head>
+    <title>Playlist Details: {{ playlist[1] }}</title>
+</head>
+<body>
+    <h1>Playlist Details: {{ playlist[1] }}</h1>
+
+    <div>
+        <p>Title: {{ playlist[1] }}</p>
+        <p>Description: {{ playlist[2] }}</p>
+        <p>Creation Year: {{ playlist[3] }}</p>
+    </div>
+
+    <h2>Created by</h2>
+    <div>
+        {% if creator %}
+            <p>{{ creator[1] }}</p>
+        {% else %}
+            <p>Creator not found.</p>
+        {% endif %}
+    </div>
+
+    <h2>Followers</h2>
+    <div>
+        {% if followers %}
+            {% for user in followers %}
+                <p>{{ user[1] }}</p>
+            {% endfor %}
+        {% else %}
+            <p>No followers for this playlist.</p>
+        {% endif %}
+    </div>
+
+    <h2>Songs in this Playlist</h2>
+    <div>
+        {% if songs %}
+            {% for song in songs %}
+                <div>
+                    <a href="/search_song?song_title={{ song[1] }}">{{ song[1] }}</a> - Duration: {{ song[3] }} seconds
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No songs found in this playlist.</p>
+        {% endif %}
+    </div>
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>

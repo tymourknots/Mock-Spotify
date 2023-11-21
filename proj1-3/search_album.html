@@ -1,0 +1,24 @@
+<html>
+<head>
+    <title>Album Search Results</title>
+</head>
+<body>
+    <h1>Album Search Results</h1>
+
+    {% if albums %}
+        {% for album in albums %}
+            <div>
+                <p>Title: {{ album[1].strip() }}</p>
+                <p>Artist: {{ album[5].strip() }}</p>
+                <p>Release Year: {{ album[2] }}</p>
+                <p>Genre: {{ album[3] }}</p>
+                <p><a href="/album/{{ album[0].strip() }}">View Album Details</a></p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No albums found.</p>
+    {% endif %}
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>
