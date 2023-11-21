@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Song Recommendations</title>
+    <title>Album Recommendations</title>
 </head>
 <body>
-    <h1>Song Recommendations</h1>
+    <h1>Album Recommendations</h1>
 
     <div>
-        {% if songs %}
-            {% for song in songs %}
+        {% if albums %}
+            {% for album in albums %}
                 <div>
-                    <!-- Display song details -->
-                    <p>Title: {{ song[1] }}</p>
-                    <!-- Add more song details if needed -->
+                    <!-- Display album details -->
+                    <p>Title: {{ album[1] }}</p>
+                    <p>Release Year: {{ album[2] }}</p>
+                    <p>Genre: {{ album[3] }}</p>
                 </div>
             {% endfor %}
         {% else %}

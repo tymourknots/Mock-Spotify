@@ -407,7 +407,7 @@ def profile(username):
             followed_playlists = g.conn.execute(followed_playlists_query, {'user_id': user[0]}).fetchall()
 
             user_id = user[0]
-            
+
             return render_template('profile.html', user=user, songs=listened_songs, artists=followed_artists, created_playlists=created_playlists, followed_playlists=followed_playlists)
         else:
             return "User not found", 404
@@ -421,15 +421,15 @@ def recommendations(user_id):
     artist_query = text("SELECT ArtistID FROM Follows WHERE userID = :user_id")
     followed_artists = g.conn.execute(artist_query, {'user_id': user_id}).fetchall()
 
-    # Step 2: Select songs from these artists
-    recommended_songs = []
+    # Step 2: Select albums from these artists
+    recommended_albums = []
     for artist in followed_artists:
-        song_query = text("SELECT * FROM Song WHERE ArtistID = :artist_id ORDER BY RANDOM() LIMIT 5")
-        songs = g.conn.execute(song_query, {'artist_id': artist[0]}).fetchall()
-        recommended_songs.extend(songs)
+        album_query = text("SELECT * FROM albumBelong WHERE ArtistID = :artist_id ORDER BY RANDOM() LIMIT 5")
+        albums = g.conn.execute(album_query, {'artist_id': artist[0]}).fetchall()
+        recommended_albums.extend(albums)
 
     # Step 3: Present recommendations to the user
-    return render_template('recommendations.html', songs=recommended_songs)    
+    return render_template('recommendations.html', albums=recommended_albums)
 
 @app.route('/search_playlist')
 def search_playlist():
