@@ -201,16 +201,14 @@ def search_song():
     if song_id or song_title:
         # Fetch song, album, artist, and genre details
         query = text("""
-                 SELECT Song.*, albumBelong.Title AS AlbumTitle, albumBelong.AlbumID, 
-                        Artist.Name AS ArtistName, Artist.ArtistID, Genre.Name AS GenreName, Genre.GenreID
-                 FROM Song
-                 JOIN contains2 ON Song.songID = contains2.songID
-                 JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                 JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-                 JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
-                 JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
-                 WHERE Song.songID = :song_id OR Song.title = :song_title
-                 """)
+                    SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID, 
+                      albumBelong.Title AS AlbumTitle, albumBelong.AlbumID, albumBelong.Genre AS AlbumGenre
+                    FROM Song
+                    JOIN contains2 ON Song.songID = contains2.songID
+                    JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+                    JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+                    WHERE Song.songID = :song_id OR Song.title = :song_title
+                    """)
         result = g.conn.execute(query, {'song_id': song_id, 'song_title': song_title}).fetchall()
 
         if result and not song_id:
