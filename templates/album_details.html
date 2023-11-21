@@ -9,7 +9,7 @@
         <p>Title: {{ album[1] }}</p>
         <p>Artist: <a href="/artist/{{ album[4].strip() }}">{{ album[5] }}</a></p>
         <p>Release Year: {{ album[2] }}</p>
-        <p>Genre: <a href="/genre/{{ album[-2].strip() }}">{{ album[-1] }}</a></p>
+        <p>Genre: <a href="/genre/{{ album[4].strip() }}">{{ album[3] }}</a></p>
     </div>
 
     <h2>Songs in this Album</h2>
