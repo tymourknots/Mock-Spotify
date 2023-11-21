@@ -15,7 +15,7 @@
     <h2>Created by</h2>
     <div>
         {% if creator %}
-            <div><a href="/profile/{{ creator[1] }}">{{ creator[1] }}</a></div>
+            <p>{{ creator[1] }}</p>
         {% else %}
             <p>Creator not found.</p>
         {% endif %}
@@ -25,7 +25,7 @@
     <div>
         {% if followers %}
             {% for user in followers %}
-                <div><a href="/profile/{{ user[1] }}">{{ user[1] }}</a></div>
+                <p>{{ user[1] }}</p>
             {% endfor %}
         {% else %}
             <p>No followers for this playlist.</p>
