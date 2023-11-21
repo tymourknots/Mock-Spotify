@@ -10,8 +10,6 @@
             {% for playlist in playlists %}
                 <div>
                     <p>Playlist Name: <a href="/playlist/{{ playlist[0].strip() }}">{{ playlist[1] }}</a></p>
-                    <p>Playlist Description: {{ playlist[2] }}</p>
-                    <p>Playlist Creation Year: {{ playlist[3] }}</p>
                 </div>
             {% endfor %}
         {% else %}
