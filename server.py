@@ -355,24 +355,38 @@ def search_g(genre_name):
 
 @app.route('/genre/<genre_id>')
 def genre_details(genre_id):
-  genre_query = text("""
-                     SELECT * FROM Genre WHERE GenreID = :genre_id
-                      """)
-  genre_details = g.conn.execute(genre_query, {'genre_id': genre_id}).fetchone()
+    # Fetch genre details
+    genre_query = text("""
+                       SELECT * FROM Genre WHERE GenreID = :genre_id
+                       """)
+    genre_details = g.conn.execute(genre_query, {'genre_id': genre_id}).fetchone()
 
-  artists_query = text("""
-                        SELECT Artist.* FROM Artist
-                        JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
-                        WHERE belongsTo2.GenreID = :genre_id
+    # Fetch artists in the genre
+    artists_query = text("""
+                         SELECT Artist.* FROM Artist
+                         JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+                         WHERE belongsTo2.GenreID = :genre_id
+                         """)
+    artists = g.conn.execute(artists_query, {'genre_id': genre_id}).fetchall()
+
+    # Fetch albums in the genre
+    albums_query = text("""
+                        SELECT albumBelong.* FROM albumBelong
+                        WHERE albumBelong.Genre = (SELECT Name FROM Genre WHERE GenreID = :genre_id)
                         """)
-  artists = g.conn.execute(artists_query, {'genre_id': genre_id}).fetchall()
+    albums = g.conn.execute(albums_query, {'genre_id': genre_id}).fetchall()
 
-  albums_query = text("""
-                      SELECT albumBelong.* FROM albumBelong
-                      WHERE albumBelong.Genre = (SELECT Name FROM Genre WHERE GenreID = :genre_id)
-                      """)
-  albums = g.conn.execute(albums_query, {'genre_id': genre_id}).fetchall()
-  return render_template('genre_details.html', genre = genre_details, artists= artists, albums = albums)
+    # Fetch songs in the genre
+    songs_query = text("""
+                       SELECT Song.* FROM Song
+                       JOIN contains2 ON Song.songID = contains2.songID
+                       JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+                       WHERE albumBelong.Genre = (SELECT Name FROM Genre WHERE GenreID = :genre_id)
+                       """)
+    songs = g.conn.execute(songs_query, {'genre_id': genre_id}).fetchall()
+
+    return render_template('genre_details.html', genre=genre_details, artists=artists, albums=albums, songs=songs)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
