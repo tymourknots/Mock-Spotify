@@ -454,6 +454,38 @@ def recommendations(user_id):
     # Step 3: Present recommendations to the user
     return render_template('recommendations.html', songs=recommended_songs)
 
+@app.route('/recommend_artists/<user_id>')
+def recommend_artists(user_id):
+    # Fetch genres of artists the user follows
+    genre_query = text("""
+                       SELECT DISTINCT Genre.GenreID
+                       FROM Artist
+                       JOIN Follows ON Artist.ArtistID = Follows.ArtistID
+                       JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+                       JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
+                       WHERE Follows.userID = :user_id
+                       """)
+    followed_genres = g.conn.execute(genre_query, {'user_id': user_id}).fetchall()
+
+    # Fetch artists in those genres that the user does not follow
+    recommended_artists = []
+    for genre in followed_genres:
+        artist_query = text("""
+                            SELECT Artist.*
+                            FROM Artist
+                            JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+                            WHERE belongsTo2.GenreID = :genre_id
+                            AND Artist.ArtistID NOT IN (
+                                SELECT ArtistID FROM Follows WHERE userID = :user_id
+                            )
+                            LIMIT 5
+                            """)
+        artists = g.conn.execute(artist_query, {'genre_id': genre[0], 'user_id': user_id}).fetchall()
+        recommended_artists.extend(artists)
+
+    return render_template('recommend_artists.html', artists=recommended_artists)
+
+
 
 @app.route('/search_playlist')
 def search_playlist():
