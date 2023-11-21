@@ -335,6 +335,22 @@ def search_genre():
     print("Genres query result:", result)
     return render_template("search_genre.html", genres=result)
 
+@app.route('/search_genre/<genre_name>')
+def search_genre(genre_name):
+    # Fetch songs belonging to the specified genre
+    query = text("""
+                 SELECT Song.* FROM Song
+                 JOIN albumBelong ON Song.AlbumID = albumBelong.AlbumID
+                 WHERE albumBelong.Genre  :genre_name
+                 """)
+    songs = g.conn.execute(query, {'genre_name': genre_name}).fetchall()
+
+    if songs:
+        return render_template('genre.html', genre=genre_name, songs=songs)
+    else:
+        return f"No songs found for genre: {genre_name}", 404
+
+
 
 @app.route('/genre/<genre_id>')
 def genre_details(genre_id):

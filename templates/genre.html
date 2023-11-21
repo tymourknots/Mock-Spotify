@@ -1,0 +1,23 @@
+<html>
+<head>
+    <title>Genre: {{ genre }}</title>
+</head>
+<body>
+    <h1>Genre: {{ genre }}</h1>
+
+    <div>
+        {% if songs %}
+            <h2>Songs in this Genre</h2>
+            <div>
+                {% for song in songs %}
+                    <div><a href="/search_song?song_id={{ song[0].strip() }}">{{ song[1] }}</a></div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No songs found in this genre.</p>
+        {% endif %}
+    </div>
+
+    <p><a href="/">Go back to the home page</a></p>
+</body>
+</html>
