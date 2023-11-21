@@ -359,6 +359,8 @@ def playlist_details(playlist_id):
                           WHERE PlaylistID = :playlist_id
                           """)
     playlist = g.conn.execute(playlist_query, {'playlist_id': playlist_id}).fetchone()
+    print("Playlist ID:", playlist_id)
+    print("Playlist query result:", playlist)
 
     # Fetch songs in the playlist
     songs_query = text("""
