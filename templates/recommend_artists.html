@@ -9,7 +9,7 @@
             {% for artist in artists %}
                 <div>
                     <p>Name: <a href="/artist/{{ artist[0].strip() }}">{{ artist[1] }}</a></p>
-                    <!-- Additional artist details if needed -->
+                    <p>Biography: {{ artist[2] }}</p>
                 </div>
             {% endfor %}
         {% else %}
