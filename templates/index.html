@@ -11,7 +11,6 @@
 <body>
     <h1>Wannabe Spotify</h1>
 
-    <!-- Song Search Form -->
     <form method="get" action="/search_song">
         <p>Search for a song: <input type="text" name="song_title" placeholder="Search for a song"> <input type="submit" value="Search"></p>
     </form>
@@ -32,8 +31,6 @@
         <p>Search for a playlist: <input type="text" name="playlist_title" placeholder="Search for a playlist"> <input type="submit" value="Search"></p>
     </form>
     
-
-    <!-- Conditional Button: Login or Profile based on session -->
     {% if session['username'] %}
         <p>Welcome, {{ session['username'] }}! <a href="/profile/{{ session['username'] }}">Profile</a> | <a href="/logout">Logout</a></p>
     {% else %}

@@ -190,6 +190,7 @@ def add():
   g.conn.commit()
   return redirect('/')
 
+# Route for searching a song and also displaying the song's page
 @app.route('/search_song')
 def search_song():
     song_title = request.args.get('song_title')
@@ -223,16 +224,15 @@ def search_song():
                                   """)
             playlists = g.conn.execute(playlist_query, {'song_id': song_id}).fetchall()
 
-    print("Songs query result:", result)
-    print("Playlists containing song:", playlists)
     return render_template("search_song.html", songs=result, playlists=playlists)
 
-
+# Route for searching an album with a link to the album's page
 @app.route('/search_album')
 def search_album():
     album_title = request.args.get('album_title')
 
     if album_title:
+        # Fetches albums with matching album_title with their respective artist names
         query = text("""
                      SELECT albumBelong.*, Artist.Name AS ArtistName
                      FROM albumBelong
@@ -243,12 +243,12 @@ def search_album():
     else:
         result = []
 
-    print("Albums query result:", result)
     return render_template("search_album.html", albums=result)
 
-
+# Route for displaying the album's page
 @app.route('/album/<album_id>')
 def album_details(album_id):
+    # Fetch album details (including artist and genre)
     album_query = text("""
                      SELECT albumBelong.*, Artist.Name AS ArtistName, Artist.ArtistID, Genre.Name AS GenreName
                      FROM albumBelong
@@ -267,17 +267,16 @@ def album_details(album_id):
                        """)
     songs = g.conn.execute(songs_query, {'album_id': album_id}).fetchall()
 
-    print("Album details:", album_details)
-    print("Songs in album:", songs)
     if album_details:
         return render_template('album_details.html', album=album_details, songs=songs)
     else:
         return "Album not found", 404
 
+# Route for searching an artist with a link to the artist's page
 @app.route('/search_artist')
 def search_artist():
     artist_name = request.args.get('artist_name')
-
+    # Fetches artists with matching artist_name
     if artist_name:
         query = text("""
                      SELECT * FROM Artist WHERE Name LIKE :artist_name
@@ -286,43 +285,44 @@ def search_artist():
     else:
         result = []
 
-    print("Artists query result:", result)
     return render_template('search_artist.html', artists=result)
 
-
+# Route for displaying the artist's page
 @app.route('/artist/<artist_id>')
 def artist_details(artist_id):
-  artist_query = text("""
+    # Fetches artist details with their respective genres
+    artist_query = text("""
                       SELECT Artist.*, Genre.Name AS GenreName, Genre.GenreID
                       FROM Artist
                       JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
                       JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
                       WHERE Artist.ArtistID = :artist_id
                       """)
-  artist_details = g.conn.execute(artist_query, {'artist_id': artist_id}).fetchone()
-  print("Artist details:", artist_details)
+    artist_details = g.conn.execute(artist_query, {'artist_id': artist_id}).fetchone()
 
-  albums_query = text("""
+    # Fetches albums by artist
+    albums_query = text("""
                       SELECT * FROM albumBelong WHERE ArtistID = :artist_id
                       """)
-  albums = g.conn.execute(albums_query, {'artist_id': artist_id}).fetchall()
+    albums = g.conn.execute(albums_query, {'artist_id': artist_id}).fetchall()
 
-  songs_query = text("""
+    # Fetches songs by artist
+    songs_query = text("""
                     SELECT Song.* FROM Song
                     JOIN contains2 ON Song.songID = contains2.songID
                     JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
                     WHERE albumBelong.ArtistID = :artist_id
                     """)
-  songs = g.conn.execute(songs_query, {'artist_id': artist_id}).fetchall()
-  print("Songs by artist:", songs)
+    songs = g.conn.execute(songs_query, {'artist_id': artist_id}).fetchall()
 
-  return render_template('artist_details.html', artist=artist_details, albums=albums, songs=songs)
+    return render_template('artist_details.html', artist=artist_details, albums=albums, songs=songs)
 
-
+# Route for searching a genre with a link to the genre's page
 @app.route('/search_genre')
 def search_genre():
     genre_name = request.args.get('genre_name')
 
+    # Fetches genres matching genre_name
     if genre_name:
         query = text("""
                      SELECT * FROM Genre
@@ -332,12 +332,14 @@ def search_genre():
     else:
         result = []
 
-    print("Genres query result:", result)
     return render_template("search_genre.html", genres=result)
 
+# Route is same as above (searches for a genre with a link to the page) except it takes in the genre_name as a parameter instead of user input
+# Meant to connect Song pages with Genre pages and vice versa
 @app.route('/search_g/<genre_name>')
 def search_g(genre_name):
-    # Adjusted query to find matching genres
+    
+    # Fetches genres matching genre_name
     genre_query = text("""
                        SELECT * FROM Genre
                        WHERE Name ILIKE :genre_name
@@ -349,10 +351,7 @@ def search_g(genre_name):
     else:
         return f"No genres found matching: {genre_name}", 404
 
-
-
-
-
+# Route for displaying the genre's page
 @app.route('/genre/<genre_id>')
 def genre_details(genre_id):
     # Fetch genre details
@@ -387,13 +386,14 @@ def genre_details(genre_id):
 
     return render_template('genre_details.html', genre=genre_details, artists=artists, albums=albums, songs=songs)
 
-
+# Route for logging in
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username'].strip()
         password = request.form['password'].strip()
 
+        # Check if the username and password match a user in the database
         user_query = text("SELECT * FROM Users WHERE UserName = :username AND Password = :password")
         user = g.conn.execute(user_query, {'username': username, 'password': password}).fetchone()
 
@@ -405,11 +405,14 @@ def login():
 
     return render_template('login.html')
 
+# Route for logging out
 @app.route('/logout')
 def logout():
-    session.pop('username', None)  # Remove the username from the session
+    # Remove the username from the session
+    session.pop('username', None)  
     return redirect(url_for('index'))
 
+# Route for displaying the user's profile after logging in
 @app.route('/profile/<username>')
 def profile(username):
     if 'username' in session and session['username'] == username:
@@ -425,6 +428,7 @@ def profile(username):
                                    """)
             listened_songs = g.conn.execute(listens_to_query, {'user_id': user[0]}).fetchall()  
 
+            # Fetch the list of artists the user follows
             followed_artists_query = text("""
                                           SELECT Artist.*, Follows.FollowDate
                                           FROM Follows
@@ -433,6 +437,7 @@ def profile(username):
                                           """)
             followed_artists = g.conn.execute(followed_artists_query, {'user_id': user[0]}).fetchall()
 
+            # Fetch the list of playlists the user created
             created_playlists_query = text("""
                                            SELECT Playlist.* FROM Playlist
                                            JOIN CreateORFollow ON Playlist.PlaylistID = CreateORFollow.PlaylistID
@@ -440,6 +445,7 @@ def profile(username):
                                             """)
             created_playlists = g.conn.execute(created_playlists_query, {'user_id': user[0]}).fetchall()
 
+            # Fetch the list of playlists the user follows
             followed_playlists_query = text("""
                                             SELECT Playlist.* FROM Playlist
                                             JOIN CreateORFollow ON Playlist.PlaylistID = CreateORFollow.PlaylistID
@@ -455,7 +461,7 @@ def profile(username):
     else:
         return redirect(url_for('login'))
     
-
+# Route for the recommended songs button on the user's profile page
 @app.route('/recommendations/<user_id>')
 def recommendations(user_id):
     # Step 1: Find the artists the user follows
@@ -480,9 +486,10 @@ def recommendations(user_id):
     # Step 3: Present recommendations to the user
     return render_template('recommendations.html', songs=recommended_songs)
 
+# Route for the recommended artists button on the user's profile page
 @app.route('/recommend_artists/<user_id>')
 def recommend_artists(user_id):
-    # Fetch genres of artists the user follows
+    # Step 1: Fetch genres of artists the user follows
     genre_query = text("""
                        SELECT DISTINCT Genre.GenreID
                        FROM Artist
@@ -493,7 +500,7 @@ def recommend_artists(user_id):
                        """)
     followed_genres = g.conn.execute(genre_query, {'user_id': user_id}).fetchall()
 
-    # Fetch artists in those genres that the user does not follow
+    # Step 2: Fetch artists in those genres that the user does not follow
     recommended_artists = []
     for genre in followed_genres:
         artist_query = text("""
@@ -509,10 +516,13 @@ def recommend_artists(user_id):
         artists = g.conn.execute(artist_query, {'genre_id': genre[0], 'user_id': user_id}).fetchall()
         recommended_artists.extend(artists)
 
+    # Step 3: Present recommendations to the user
     return render_template('recommend_artists.html', artists=recommended_artists)
 
+#Route for the recommended playlists button on the user's profile page
 @app.route('/recommend_playlists/<user_id>')
 def recommend_playlists(user_id):
+
     # Step 1: Fetch the artists followed by the user
     artist_query = text("SELECT ArtistID FROM Follows WHERE userID = :user_id")
     followed_artists = g.conn.execute(artist_query, {'user_id': user_id}).fetchall()
@@ -525,26 +535,25 @@ def recommend_playlists(user_id):
 
     # Step 2: Fetch playlists that contain songs by these artists
     playlist_query = text("""
-        SELECT DISTINCT Playlist.PlaylistID, Playlist.Title
-        FROM Playlist
-        JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
-        JOIN contains2 ON contains1.songID = contains2.songID
-        JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-        WHERE albumBelong.ArtistID IN :artist_ids
-    """)
+                        SELECT DISTINCT Playlist.PlaylistID, Playlist.Title
+                        FROM Playlist
+                        JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
+                        JOIN contains2 ON contains1.songID = contains2.songID
+                        JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+                        WHERE albumBelong.ArtistID IN :artist_ids
+                        """)
     playlists = g.conn.execute(playlist_query, {'artist_ids': tuple(artist_ids)}).fetchall()
 
     # Step 3: Present the recommended playlists to the user
     return render_template('recommend_playlists.html', playlists=playlists)
 
-
-
-
+#Route for searching a playlist with a link to the playlist's page
 @app.route('/search_playlist')
 def search_playlist():
     playlist_title = request.args.get('playlist_title')
 
     if playlist_title:
+        # Fetch playlists with matching playlist_title
         query = text("""
                      SELECT * FROM Playlist
                      WHERE Title ILIKE :playlist_title
@@ -553,19 +562,17 @@ def search_playlist():
     else:
         result = []
 
-    print("Playlists query result:", result)
     return render_template("search_playlist.html", playlists=result)
 
-
+#Route for displaying the playlist's page
 @app.route('/playlist/<playlist_id>')
 def playlist_details(playlist_id):
+    # Fetch playlist details
     playlist_query = text("""
                           SELECT * FROM Playlist
                           WHERE PlaylistID = :playlist_id
                           """)
     playlist = g.conn.execute(playlist_query, {'playlist_id': playlist_id}).fetchone()
-    print("Playlist ID:", playlist_id)
-    print("Playlist query result:", playlist)
 
     # Fetch songs in the playlist
     songs_query = text("""
@@ -575,6 +582,7 @@ def playlist_details(playlist_id):
                        """)
     songs = g.conn.execute(songs_query, {'playlist_id': playlist_id}).fetchall()
 
+    # Fetch the creator of the playlist
     creator_query = text("""
                          SELECT Users.* FROM Users
                          JOIN CreateORFollow ON Users.UserID = CreateORFollow.UserID
@@ -582,6 +590,7 @@ def playlist_details(playlist_id):
                          """)
     creator = g.conn.execute(creator_query, {'playlist_id': playlist_id}).fetchone()
 
+    # Fetch the users who follow the playlist
     followers_query = text("""
                            SELECT Users.* FROM Users
                            JOIN CreateORFollow ON Users.UserID = CreateORFollow.UserID
@@ -594,8 +603,6 @@ def playlist_details(playlist_id):
     else:
         return "Playlist not found", 404
     
-
-
 
 if __name__ == "__main__":
   import click
