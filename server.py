@@ -216,16 +216,17 @@ def search_song():
     else:
         result = []
 
-    playlist_query = text("""
-                          SELECT Playlist.* FROM Playlist
-                          JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
-                          WHERE contains1.songID = :song_id
-                          """)
-    playlists = g.conn.execute(playlist_query, {'song_id': song_id}).fetchall()
+    playlists = []
+    if song_id:
+        playlist_query = text("""
+                              SELECT Playlist.* FROM Playlist
+                              JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
+                              WHERE contains1.songID = :song_id
+                              """)
+        playlists = g.conn.execute(playlist_query, {'song_id': song_id}).fetchall()
+
     print("Songs query result:", result)
     print("Playlists containing song:", playlists)
-    print("Received song ID:", song_id)
-    print("Playlists for song ID", song_id, ":", playlists)
     return render_template("search_song.html", songs=result, playlists=playlists)
 
 @app.route('/album/<album_id>')
