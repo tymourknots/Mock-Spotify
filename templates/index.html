@@ -21,6 +21,10 @@
         <p>Search for an artist: <input type="text" name="artist_name" placeholder="Search for an artist"> <input type="submit" value="Search"></p>
     </form>
 
+    <form method="get" action="/search_album">
+        <p>Search for an album: <input type="text" name="album_name" placeholder="Search for an album"> <input type="submit" value="Search"></p>
+    </form>
+
     <!-- Conditional Button: Login or Profile based on session -->
     {% if session['username'] %}
         <p>Welcome, {{ session['username'] }}! <a href="/profile/{{ session['username'] }}">Profile</a> | <a href="/logout">Logout</a></p>
