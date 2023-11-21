@@ -9,7 +9,7 @@
         {% if songs %}
             {% for song in songs %}
                 <div>
-                    <p>Title: {{ song[0] }}</p>
+                    <p>Title: <a href="/search_song?song_id={{ song[0].strip() }}">{{ song[1] }}</a></p>
                     <p>Artist: <a href="/artist/{{ song[-1].strip() }}">{{ song[-2] }}</a></p>
                     <p>Genre: {{ song[2] }}</p>
                     <p>Duration: {{ song[3] }}</p>
