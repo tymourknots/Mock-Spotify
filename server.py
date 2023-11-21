@@ -436,15 +436,22 @@ def recommendations(user_id):
     artist_query = text("SELECT ArtistID FROM Follows WHERE userID = :user_id")
     followed_artists = g.conn.execute(artist_query, {'user_id': user_id}).fetchall()
 
-    # Step 2: Select albums from these artists
-    recommended_albums = []
+    # Step 2: Select songs from these artists
+    recommended_songs = []
     for artist in followed_artists:
-        album_query = text("SELECT * FROM albumBelong WHERE ArtistID = :artist_id ORDER BY RANDOM() LIMIT 5")
-        albums = g.conn.execute(album_query, {'artist_id': artist[0]}).fetchall()
-        recommended_albums.extend(albums)
+        song_query = text("""
+                          SELECT Song.* FROM Song
+                          JOIN contains2 ON Song.songID = contains2.songID
+                          JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+                          WHERE albumBelong.ArtistID = :artist_id
+                          ORDER BY RANDOM() LIMIT 5
+                          """)
+        songs = g.conn.execute(song_query, {'artist_id': artist[0]}).fetchall()
+        recommended_songs.extend(songs)
 
     # Step 3: Present recommendations to the user
-    return render_template('recommendations.html', albums=recommended_albums)
+    return render_template('recommendations.html', songs=recommended_songs)
+
 
 @app.route('/search_playlist')
 def search_playlist():
