@@ -279,6 +279,8 @@ def album_details(album_id):
                        """)
     songs = g.conn.execute(songs_query, {'album_id': album_id}).fetchall()
 
+    print("Album details:", album_details)
+    print("Songs in album:", songs)
     if album_details:
         return render_template('album_details.html', album=album_details, songs=songs)
     else:
