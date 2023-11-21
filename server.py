@@ -337,19 +337,18 @@ def search_genre():
 
 @app.route('/search_g/<genre_name>')
 def search_g(genre_name):
-    # Adjusted query to join Song with albumBelong indirectly
-    query = text("""
-                 SELECT Song.* FROM Song
-                 JOIN contains2 ON Song.songID = contains2.songID
-                 JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                 WHERE albumBelong.Genre ILIKE :genre_name
-                 """)
-    songs = g.conn.execute(query, {'genre_name': f'%{genre_name}%'}).fetchall()
+    # Adjusted query to find matching genres
+    genre_query = text("""
+                       SELECT * FROM Genre
+                       WHERE Name ILIKE :genre_name
+                       """)
+    matching_genres = g.conn.execute(genre_query, {'genre_name': f'%{genre_name}%'}).fetchall()
 
-    if songs:
-        return render_template('genre.html', genre=genre_name, songs=songs)
+    if matching_genres:
+        return render_template('search_genre.html', genres=matching_genres)
     else:
-        return f"No songs found for genre: {genre_name}", 404
+        return f"No genres found matching: {genre_name}", 404
+
 
 
 
