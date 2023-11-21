@@ -335,8 +335,8 @@ def search_genre():
     print("Genres query result:", result)
     return render_template("search_genre.html", genres=result)
 
-@app.route('/search_genre/<genre_name>')
-def search_genre(genre_name):
+@app.route('/search_g/<genre_name>')
+def search_g(genre_name):
     # Adjusted query to join Song with albumBelong indirectly
     query = text("""
                  SELECT Song.* FROM Song
