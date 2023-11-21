@@ -262,22 +262,27 @@ def search_album():
 @app.route('/album/<album_id>')
 def album_details(album_id):
     album_query = text("""
-                 SELECT albumBelong.*, Artist.Name AS ArtistName, Artist.ArtistID
-                 FROM albumBelong
-                 JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-                 WHERE albumBelong.AlbumID = :album_id
-                 """)
+                     SELECT albumBelong.*, Artist.Name AS ArtistName, Artist.ArtistID, Genre.Name AS GenreName
+                     FROM albumBelong
+                     JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+                     JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+                     JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
+                     WHERE albumBelong.AlbumID = :album_id
+                     """)
     album_details = g.conn.execute(album_query, {'album_id': album_id}).fetchone()
-    
+
+    # Fetch songs in the album
     songs_query = text("""
                        SELECT song.* FROM song
                        JOIN contains2 ON song.songID = contains2.songID
                        WHERE contains2.AlbumID = :album_id
                        """)
     songs = g.conn.execute(songs_query, {'album_id': album_id}).fetchall()
-    print("Album details:", album_details)  # In the album_details route
-    print("Songs in album:", songs)  # In the album_details route
-    return render_template('album_details.html', album = album_details, songs = songs)
+
+    if album_details:
+        return render_template('album_details.html', album=album_details, songs=songs)
+    else:
+        return "Album not found", 404
 
 @app.route('/search_artist')
 def search_artist():
