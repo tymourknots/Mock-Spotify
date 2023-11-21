@@ -309,6 +309,23 @@ def artist_details(artist_id):
   print("Albums by artist:", albums)
   return render_template('artist_details.html', artist = artist_details, albums = albums)
 
+@app.route('/search_genre')
+def search_genre():
+    genre_name = request.args.get('genre_name')
+
+    if genre_name:
+        query = text("""
+                     SELECT * FROM Genre
+                     WHERE Name ILIKE :genre_name
+                     """)
+        result = g.conn.execute(query, {'genre_name': f'%{genre_name}%'}).fetchall()
+    else:
+        result = []
+
+    print("Genres query result:", result)
+    return render_template("search_genre.html", genres=result)
+
+
 @app.route('/genre/<genre_id>')
 def genre_details(genre_id):
   genre_query = text("""
