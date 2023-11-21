@@ -244,7 +244,7 @@ def search_album():
                      SELECT albumBelong.*, Artist.Name AS ArtistName
                      FROM albumBelong
                      JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-                     WHERE Title ILIKE :album_title
+                     WHERE Title = :album_title
                      """)
         result = g.conn.execute(query, {'album_title': f'%{album_title}%'}).fetchall()
     else:
