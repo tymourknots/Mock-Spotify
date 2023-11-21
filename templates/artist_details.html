@@ -22,6 +22,17 @@
         {% endfor %}
     </div>
 
+    <h2>Songs by this Artist</h2>
+    <div>
+        {% if songs %}
+            {% for song in songs %}
+                <div><a href="/search_song?song_id={{ song[0].strip() }}">{{ song[1] }}</a> - Genre: {{ song[2] }}</div>
+            {% endfor %}
+        {% else %}
+            <p>No songs found for this artist.</p>
+        {% endif %}
+    </div>
+
     <p><a href="/">Go back to the home page</a></p>
 </body>
 </html>

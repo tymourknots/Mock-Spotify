@@ -202,22 +202,27 @@ def search_song():
     if song_id:
         # Fetch song details by song ID
         query = text("""
-                     SELECT song.*, albumBelong.Title AS AlbumTitle, albumBelong.AlbumID
-                     FROM song
-                     JOIN contains2 ON song.songID = contains2.songID
-                     JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                     WHERE song.songID = :song_id
-                     """)
+                 SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID, 
+                        albumBelong.Title AS AlbumTitle, albumBelong.AlbumID
+                 FROM Song
+                 JOIN contains2 ON Song.songID = contains2.songID
+                 JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+                 JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+                 WHERE Song.songID = :song_id
+                 """)
         result = g.conn.execute(query, {'song_id': song_id}).fetchall()
+    
     elif song_title:
         # Fetch song details by song title
         query = text("""
-                     SELECT song.*, albumBelong.Title AS AlbumTitle, albumBelong.AlbumID
-                     FROM song
-                     JOIN contains2 ON song.songID = contains2.songID
-                     JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                     WHERE song.title = :song_title
-                     """)
+                 SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID, 
+                        albumBelong.Title AS AlbumTitle, albumBelong.AlbumID
+                 FROM Song
+                 JOIN contains2 ON Song.songID = contains2.songID
+                 JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+                 JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+                 WHERE Song.title = :song_title
+                 """)
         result = g.conn.execute(query, {'song_title': song_title}).fetchall()
         if result:
             song_id = result[0][0]  # Extract the song ID from the search results
@@ -306,8 +311,18 @@ def artist_details(artist_id):
                       SELECT * FROM albumBelong WHERE ArtistID = :artist_id
                       """)
   albums = g.conn.execute(albums_query, {'artist_id': artist_id}).fetchall()
-  print("Albums by artist:", albums)
-  return render_template('artist_details.html', artist = artist_details, albums = albums)
+
+  songs_query = text("""
+                    SELECT Song.* FROM Song
+                    JOIN contains2 ON Song.songID = contains2.songID
+                    JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+                    WHERE albumBelong.ArtistID = :artist_id
+                    """)
+  songs = g.conn.execute(songs_query, {'artist_id': artist_id}).fetchall()
+  print("Songs by artist:", songs)
+
+  return render_template('artist_details.html', artist=artist_details, albums=albums, songs=songs)
+
 
 @app.route('/search_genre')
 def search_genre():

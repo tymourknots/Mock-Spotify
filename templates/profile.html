@@ -1,7 +1,6 @@
 <html>
 <head>
-    <title>Profile: {{ user[1] }}</title> <!-- Assuming user name is at index 1 -->
-</head>
+    <title>Profile: {{ user[1] }}</title> 
 <body>
     <h1>Profile: {{ user[1] }}</h1>
 
@@ -61,7 +60,7 @@
         {% endif %}
     </div>
 
-    <p><a href="/recommendations/{{ user[0].strip() }}">Recommend Me a Song!</a></p>
+    <p><a href="/recommendations/{{ user[0].strip() }}">Recommend Me an Album!</a></p>
     <p><a href="/">Go back to the home page</a></p>
     <p><a href="/logout">Logout</a></p>
 </body>
