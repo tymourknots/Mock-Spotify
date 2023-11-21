@@ -384,8 +384,22 @@ def playlist_details(playlist_id):
                        """)
     songs = g.conn.execute(songs_query, {'playlist_id': playlist_id}).fetchall()
 
+    creator_query = text("""
+                         SELECT Users.* FROM Users
+                         JOIN CreateORFollow ON Users.UserID = CreateORFollow.UserID
+                         WHERE CreateORFollow.PlaylistID = :playlist_id AND CreateORFollow.Creates = TRUE
+                         """)
+    creator = g.conn.execute(creator_query, {'playlist_id': playlist_id}).fetchone()
+
+    followers_query = text("""
+                           SELECT Users.* FROM Users
+                           JOIN CreateORFollow ON Users.UserID = CreateORFollow.UserID
+                           WHERE CreateORFollow.PlaylistID = :playlist_id AND CreateORFollow.Creates = FALSE
+                           """)
+    followers = g.conn.execute(followers_query, {'playlist_id': playlist_id}).fetchall()
+
     if playlist:
-        return render_template('playlist_details.html', playlist=playlist, songs=songs)
+        return render_template('playlist_details.html', playlist=playlist, songs=songs, creator=creator, followers=followers)
     else:
         return "Playlist not found", 404
 
