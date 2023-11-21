@@ -246,7 +246,7 @@ def search_album():
                      JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
                      WHERE Title = :album_title
                      """)
-        result = g.conn.execute(query, {'album_title': {album_title}}).fetchall()
+        result = g.conn.execute(query, {'album_title': album_title}).fetchall()
     else:
         result = []
 
