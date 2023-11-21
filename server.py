@@ -496,16 +496,17 @@ def recommend_playlists(user_id):
 
     # Step 2: Fetch playlists that contain songs by these artists
     playlist_query = text("""
-        SELECT DISTINCT Playlist.PlaylistID, Playlist.Title
-        FROM Playlist
-        JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
-        JOIN contains2 ON contains1.songID = contains2.songID
-        WHERE contains2.ArtistID IN :artist_ids
-    """)
+                          SELECT DISTINCT Playlist.PlaylistID, Playlist.Title
+                          FROM Playlist
+                          JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
+                          JOIN Song ON contains1.songID = Song.songID
+                          WHERE Song.ArtistID IN :artist_ids
+                          """)
     playlists = g.conn.execute(playlist_query, {'artist_ids': tuple(artist_ids)}).fetchall()
 
     # Step 3: Present the recommended playlists to the user
     return render_template('recommend_playlists.html', playlists=playlists)
+
 
 
 @app.route('/search_playlist')
