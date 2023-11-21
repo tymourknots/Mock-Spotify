@@ -269,7 +269,7 @@ def search_artist():
         result = []
 
     print("Artists query result:", result)
-    return render_template('search_results_artist.html', artists=result)
+    return render_template('search_artist.html', artists=result)
 
 
 @app.route('/artist/<artist_id>')
