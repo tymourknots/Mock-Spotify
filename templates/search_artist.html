@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Artist Search Results</title>
+</head>
+<body>
+    <h1>Artist Search Results for '{{ artist_name }}'</h1>
+    <div>
+        {% for artist in artists %}
+            <p><a href="/artist/{{ artist.ArtistID }}">{{ artist.Name }}</a></p>
+        {% else %}
+            <p>No artists found.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

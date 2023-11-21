@@ -256,6 +256,13 @@ def album_details(album_id):
     print("Songs in album:", songs)  # In the album_details route
     return render_template('album_details.html', album = album_details, songs = songs)
 
+@app.route('/search_artist')
+def search_artist():
+   artist_name = request.args.get('artist_name')
+   query = text("SELECT * FROM Artist WHERE Name = :artist_name")
+   result = g.conn.execute(query, {'name': f'%{artist_name}%'}).fetchall()
+   return render_template('search_artist.html', artists = result)
+
 @app.route('/artist/<artist_id>')
 def artist_details(artist_id):
   artist_query = text("""
