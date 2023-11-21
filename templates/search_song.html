@@ -15,6 +15,18 @@
                 <p>Release Year: {{ song[4] }}</p>
                 <p>Amount Played: {{ song[6] }} plays</p>
                 <p>Album: <a href="/album/{{ song[8].strip() }}">{{ song[7] }}</a></p>
+
+                <!-- Playlists containing the song -->
+                <h3>Playlists containing this song:</h3>
+                <div>
+                    {% if playlists %}
+                        {% for playlist in playlists %}
+                            <p><a href="/playlist/{{ playlist[0].strip() }}">{{ playlist[1] }}</a></p>
+                        {% endfor %}
+                    {% else %}
+                        <p>This song is not in any playlists.</p>
+                    {% endif %}
+                </div>
             </div>
         {% endfor %}
     {% else %}

@@ -216,8 +216,15 @@ def search_song():
     else:
         result = []
 
+    playlist_query = text("""
+                          SELECT Playlist.* FROM Playlist
+                          JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
+                          WHERE contains1.songID = :song_id
+                          """)
+    playlists = g.conn.execute(playlist_query, {'song_id': song_id}).fetchall()
     print("Songs query result:", result)
-    return render_template("search_song.html", songs=result)
+    print("Playlists containing song:", playlists)
+    return render_template("search_song.html", songs=result, playlists=playlists)
 
 @app.route('/album/<album_id>')
 def album_details(album_id):
@@ -333,6 +340,28 @@ def profile(username):
             return "User not found", 404
     else:
         return redirect(url_for('login'))
+    
+
+@app.route('/playlist/<playlist_id>')
+def playlist_details(playlist_id):
+    playlist_query = text("""
+                          SELECT * FROM Playlist
+                          WHERE PlaylistID = :playlist_id
+                          """)
+    playlist = g.conn.execute(playlist_query, {'playlist_id': playlist_id}).fetchone()
+
+    # Fetch songs in the playlist
+    songs_query = text("""
+                       SELECT Song.* FROM Song
+                       JOIN contains1 ON Song.songID = contains1.songID
+                       WHERE contains1.PlaylistID = :playlist_id
+                       """)
+    songs = g.conn.execute(songs_query, {'playlist_id': playlist_id}).fetchall()
+
+    if playlist:
+        return render_template('playlist_details.html', playlist=playlist, songs=songs)
+    else:
+        return "Playlist not found", 404
 
 if __name__ == "__main__":
   import click
