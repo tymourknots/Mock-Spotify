@@ -436,14 +436,16 @@ def recommendations(user_id):
     artist_query = text("SELECT ArtistID FROM Follows WHERE userID = :user_id")
     followed_artists = g.conn.execute(artist_query, {'user_id': user_id}).fetchall()
 
-    # Step 2: Select songs from these artists
+    # Step 2: Select songs and artist names from these artists
     recommended_songs = []
     for artist in followed_artists:
         song_query = text("""
-                          SELECT Song.* FROM Song
+                          SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID 
+                          FROM Song
                           JOIN contains2 ON Song.songID = contains2.songID
                           JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                          WHERE albumBelong.ArtistID = :artist_id
+                          JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+                          WHERE Artist.ArtistID = :artist_id
                           ORDER BY RANDOM() LIMIT 5
                           """)
         songs = g.conn.execute(song_query, {'artist_id': artist[0]}).fetchall()
