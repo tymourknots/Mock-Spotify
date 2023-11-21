@@ -195,7 +195,12 @@ def search_song():
     song_title = request.args.get('song_title')
     song_id = request.args.get('song_id')
 
+    # Initialize variables
+    result = []
+    playlists = []
+
     if song_id:
+        # Fetch song details by song ID
         query = text("""
                      SELECT song.*, albumBelong.Title AS AlbumTitle, albumBelong.AlbumID
                      FROM song
@@ -205,6 +210,7 @@ def search_song():
                      """)
         result = g.conn.execute(query, {'song_id': song_id}).fetchall()
     elif song_title:
+        # Fetch song details by song title
         query = text("""
                      SELECT song.*, albumBelong.Title AS AlbumTitle, albumBelong.AlbumID
                      FROM song
@@ -213,10 +219,10 @@ def search_song():
                      WHERE song.title = :song_title
                      """)
         result = g.conn.execute(query, {'song_title': song_title}).fetchall()
-    else:
-        result = []
+        if result:
+            song_id = result[0][0]  # Extract the song ID from the search results
 
-    playlists = []
+    # Fetch playlist details if song ID is available
     if song_id:
         playlist_query = text("""
                               SELECT Playlist.* FROM Playlist
@@ -228,6 +234,7 @@ def search_song():
     print("Songs query result:", result)
     print("Playlists containing song:", playlists)
     return render_template("search_song.html", songs=result, playlists=playlists)
+
 
 @app.route('/album/<album_id>')
 def album_details(album_id):
