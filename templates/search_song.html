@@ -9,12 +9,13 @@
         {% for song in songs %}
             <div>
                 <p>Title: {{ song[1] }}</p>
-                <p>Artist: <a href="/artist/{{ song[10] }}">{{ song[9] }}</a></p>
+                <p>Artist: <a href="/artist/{{ song[8].strip() }}">{{ song[7] }}</a></p>
+                <p>Album: <a href="/album/{{ song[10] }}">{{ song[9] }}</a></p>
                 <p>Genre: {{ song[2] }}</p>
                 <p>Duration: {{ song[3] }} seconds</p>
                 <p>Release Year: {{ song[4] }}</p>
                 <p>Amount Played: {{ song[6] }} plays</p>
-                <p>Album: <a href="/album/{{ song[8].strip() }}">{{ song[7] }}</a></p>
+
 
                 <h3>Playlists containing this song:</h3>
                 <div>
