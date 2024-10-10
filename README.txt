@@ -1,3 +1,5 @@
+UPDATES PENDING: will implement React and CSS into the project in the near future
+
 Tymour Aidabole (taa2146)
 Ranjing Zhang (rz2647)
 1.) PostgreSQL account
