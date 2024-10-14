@@ -1,0 +1,210 @@
+ Entity Sets:
+* User:
+   * Attributes: UserID (Primary Key), Username, Email, Password
+* Artist:
+   * Attributes: ArtistID (Primary Key), Name, Biography
+* Album:
+   * Attributes: AlbumID (Primary Key), Title, ReleaseYear, Genre
+* Song:
+   * Attributes: SongID (Primary Key), Title, Duration, ReleaseYear, AmountPlays, Liked, Genre
+* Playlist:
+   * Attributes: PlaylistID (Primary Key), Title, Description, Creation Year
+* Genre:
+   * Attributes: GenreID (Primary Key), Name, Description
+Relationship Sets:
+* Song-contains1-playlist (Many-to-Many):
+   * This relationship connects songs with the playlists that contain songs.
+   * SongID (Foreign Key referencing Song).
+   * PlaylistID (Foreign Key referencing Playlist).
+* Song-contains2-album (Many-to-Many):
+   * This relationship connects songs with the albums that contain songs
+   * AlbumID (Foreign Key referencing Album) in Song table. 
+   * SongID (Foreign Key referencing Song).
+* User-listensTo-song (Many-to-Many):
+   * This relationship set records when user click on songs that they want to listens to
+   * UserID (Foreign Key referencing User).
+   * Song ID (Foreign Key referencing Song).
+* User-createORfollow-Playlist (Many-to-Many):
+   * This relationship connects users with the playlists they have created or follow
+   * A user can follow/create multiple playlists or can follow/create zero playlist.
+   * Each playlist has at least one owner.
+   * Descriptive Attributes: Create(indicate the playlist is whether the user created or user followed), and AddedDate (when a user added a playlist to their collection).
+   * UserID (Foreign Key referencing User). 
+   * PlaylistID (Foreign Key referencing Playlist). 
+   * For the participation constraint here, we cannot capture it yet in SQL.
+* User-Follows-Artist (Many-to-Many):
+   * This relationship represents users following artists they like.
+   * Descriptive Attributes: Follow Date (when a user started following an artist).
+   * UserID (Foreign Key referencing User).
+   * ArtistID (Foreign Key referencing Artist).
+* Artist-belongTo2-Genre (Many-to-Many):
+   * This relationship records the artist and genre they belong to.
+   * ArtistID (Foreign Key referencing Artist).
+   * GenreID (Foreign Key referencing Genre).
+* Artist-belongTo3-Album (One-to-Many):
+   * This relationship associates artists with their albums.
+   * An artist can have many albums but an album has exactly one artist who created it.
+   * ArtistID (Foreign Key referencing Artist). 
+
+
+SQL Schema:
+
+
+Entity Sets:
+
+
+CREATE TABLE Song
+(songID CHAR(20),
+Title VARCHAR(20) CHECK (Title IS NOT NULL),
+Genre VARCHAR(20),
+Duration INTEGER CHECK (Duration > 0),
+ReleaseYear INTEGER CHECK (ReleaseYear <= EXTRACT(YEAR FROM    CURRENT_DATE)),
+Liked BOOLEAN CHECK (Liked IS NOT NULL),
+AmountPlay INTEGER CHECK (AmountPlay >0),
+PRIMARY KEY(songID)
+)
+
+
+CREATE TABLE Users
+(userID CHAR(20),
+UserName VARCHAR(20) CHECK (UserName IS NOT NULL),
+Email VARCHAR(50) CHECK (Email IS NOT NULL) ,
+Password VARCHAR(20) CHECK (Password IS NOT NULL AND LENGTH(Password) >= 10),
+PRIMARY KEY(userID)
+)**Project 2 Change: ALTER TABLE Users ADD COLUMN FavoriteGenres VARCHAR(20)[]
+
+
+CREATE TABLE Playlist
+(PlaylistID CHAR(20),
+Title VARCHAR(20) CHECK (Title IS NOT NULL),
+Description VARCHAR(200),
+CreationYear INTEGER CHECK (CreationYear <= EXTRACT(YEAR FROM     CURRENT_DATE)),
+PRIMARY KEY(PlaylistID)
+)
+
+
+CREATE TABLE Artist
+(ArtistID CHAR(20),
+Name VARCHAR(20) CHECK (Name IS NOT NULL),
+Biography VARCHAR(100),
+PRIMARY KEY(ArtistID)
+) ** Project 2 Change: ALTER TABLE Artist ALTER COLUMN Biography TYPE TEXT;
+
+
+
+
+CREATE TABLE Genre
+(GenreID CHAR(20),
+Name VARCHAR(20) CHECK (Name IS NOT NULL),
+Description VARCHAR(200),
+PRIMARY KEY(GenreID)
+)
+
+
+Relationship Sets:
+
+
+CREATE TABLE contains1
+(songID CHAR(20),
+PlaylistID CHAR(20),
+PRIMARY KEY(songID, PlaylistID),
+FOREIGN KEY (songID) REFERENCES Song,
+FOREIGN KEY (PlaylistID) REFERENCES Playlist
+)
+
+
+CREATE TABLE contains2
+(songID CHAR(20),
+AlbumID CHAR(20),
+PRIMARY KEY(songID, AlbumID),
+FOREIGN KEY (songID) REFERENCES Song,
+FOREIGN KEY (AlbumID) REFERENCES albumBelong
+)
+
+
+CREATE TABLE listensTO
+(songID CHAR(20),
+userID CHAR(20),
+PRIMARY KEY(songID, userID),
+FOREIGN KEY (songID) REFERENCES Song,
+FOREIGN KEY (userID) REFERENCES Users
+)
+
+
+CREATE TABLE createORfollow
+(userID CHAR(20),
+PlaylistID CHAR(20),
+Creates BOOLEAN CHECK (Creates IS NOT NULL),
+AddedDate DATE CHECK (AddedDate <= CURRENT_DATE),
+PRIMARY KEY(userID, PlaylistID),
+FOREIGN KEY (userID) REFERENCES Users,
+FOREIGN KEY (PlaylistID) REFERENCES Playlist
+)
+
+
+CREATE TABLE follows
+(userID CHAR(20),
+ArtistID CHAR(20),
+FollowDate DATE CHECK (FollowDate <= CURRENT_DATE),
+PRIMARY KEY(userID, ArtistID),
+FOREIGN KEY (userID) REFERENCES Users,
+FOREIGN KEY (ArtistID) REFERENCES Artist
+)
+
+
+
+
+CREATE TABLE belongsTo2
+(ArtistID CHAR(20),
+GenreID CHAR(20),
+PRIMARY KEY(ArtistID, GenreID),
+FOREIGN KEY (ArtistID) REFERENCES Artist,
+FOREIGN KEY (GenreID) REFERENCES Genre
+)
+
+
+CREATE TABLE albumBelong(
+AlbumID CHAR(20),
+Title VARCHAR(20) CHECK (Title IS NOT NULL),
+ReleaseYear INTEGER CHECK (ReleaseYear <= EXTRACT(YEAR FROM CURRENT_DATE)),
+Genre VARCHAR(20),
+ArtistID CHAR(20) NOT NULL,
+PRIMARY KEY(AlbumID),
+FOREIGN KEY (ArtistID) REFERENCES Artist)
+
+
+**Project 2 Change: 
+
+
+
+
+CREATE TYPE EventType AS (EventName VARCHAR(50), EventDate DATE, Location VARCHAR(100));
+CREATE TABLE MusicEvent OF EventType(
+        PRIMARY KEY (EventName, EventDate, Location)
+);
+
+
+
+
+Project 2: 3 queries for README:
+For Text attribute (full text search): 
+SELECT *
+FROM Artist
+WHERE to_tsvector('english', Biography) @@ to_tsquery('english', 'abstract | art | artist');
+
+
+
+
+For Array attribute:
+SELECT UserName, FavoriteGenres 
+FROM Users 
+WHERE 'Metal' = ANY(FavoriteGenres);
+
+
+
+
+For Composite type:
+SELECT EventName, EventDate, Location 
+FROM MusicEvent 
+WHERE Location = 'Madison Square Garden' AND EventDate >= '2023-09-02';
+**If you switch ‘2023-09-02’ with ‘2023-08-30’ you can see all the events happening at Madison Square Garden in the table; 09-02 is meant to filter out one of them to make the query more complex and meaningful.
