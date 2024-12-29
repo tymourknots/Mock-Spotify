@@ -1,6 +1,6 @@
 # Mock Spotify
 
-**Currently, I'm building a Docker container to run the PostgreSQL database so others can easily download and run my code. Initially, the database was hosted using Google Cloud Platform as part of a class project, and I'm now transitioning to Docker to make it easier for others to run the project locally. Additionally, I'm reintegrating JavaScript and CSS, and I plan to add React in the near future.
+**Currently, I'm building a Docker container to run the PostgreSQL database so others can easily download and run my code. Initially, the database was hosted using Google Cloud Platform as part of a class project, and I'm now transitioning to Docker to make it easier for others to run the project locally. Additionally, I'm reintegrating JavaScript and CSS.
 
 ## Overview
 
