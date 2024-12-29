@@ -29,7 +29,8 @@ app.secret_key = os.urandom(24)
 #
 #     DATABASEURI = "postgresql://gravano:foobar@34.75.94.195/proj1part2"
 #
-DATABASEURI = "postgresql://rz2647:523647@34.74.171.121/proj1part2"
+DATABASEURI = "postgresql://postgres:trymour@localhost:5432/postgres"
+
 
 
 #
@@ -420,131 +421,237 @@ def profile(username):
         user = g.conn.execute(user_query, {'username': username}).fetchone()
 
         if user:
-            # Fetch the list of songs the user listens to
+            user_id = user[3]  # Extract userID
+            print(f"User ID: {user_id} for username: {username}")
+
+            # Listened Songs
             listens_to_query = text("""
-                                   SELECT Song.* FROM Song
-                                   JOIN ListensTo ON Song.songID = ListensTo.songID
-                                   WHERE ListensTo.userID = :user_id
-                                   """)
-            listened_songs = g.conn.execute(listens_to_query, {'user_id': user[0]}).fetchall()  
+                SELECT Song.* FROM Song
+                JOIN listensTO ON Song.songID = listensTO.songID
+                WHERE listensTO.userid = :user_id
+            """)
+            listened_songs = g.conn.execute(listens_to_query, {'user_id': user_id}).fetchall()
 
-            # Fetch the list of artists the user follows
+            # Followed Artists
             followed_artists_query = text("""
-                                          SELECT Artist.*, Follows.FollowDate
-                                          FROM Follows
-                                          JOIN Artist ON Follows.ArtistID = Artist.ArtistID
-                                          WHERE Follows.userID = :user_id
-                                          """)
-            followed_artists = g.conn.execute(followed_artists_query, {'user_id': user[0]}).fetchall()
+                SELECT Artist.*, follows.FollowDate
+                FROM follows
+                JOIN Artist ON follows.artistID = Artist.artistID
+                WHERE follows.userid = :user_id
+            """)
+            followed_artists = g.conn.execute(followed_artists_query, {'user_id': user_id}).fetchall()
 
-            # Fetch the list of playlists the user created
+            # Created Playlists
             created_playlists_query = text("""
-                                           SELECT Playlist.* FROM Playlist
-                                           JOIN CreateORFollow ON Playlist.PlaylistID = CreateORFollow.PlaylistID
-                                           WHERE CreateORFollow.userID = :user_id AND CreateORFollow.Creates = TRUE
-                                            """)
-            created_playlists = g.conn.execute(created_playlists_query, {'user_id': user[0]}).fetchall()
+                SELECT Playlist.* FROM Playlist
+                JOIN createORfollow ON Playlist.PlaylistID = createORfollow.PlaylistID
+                WHERE createORfollow.userid = :user_id AND createORfollow.creates = TRUE
+            """)
+            created_playlists = g.conn.execute(created_playlists_query, {'user_id': user_id}).fetchall()
 
-            # Fetch the list of playlists the user follows
+            # Followed Playlists
             followed_playlists_query = text("""
-                                            SELECT Playlist.* FROM Playlist
-                                            JOIN CreateORFollow ON Playlist.PlaylistID = CreateORFollow.PlaylistID
-                                            WHERE CreateORFollow.userID = :user_id AND CreateORFollow.Creates = FALSE
-                                            """)
-            followed_playlists = g.conn.execute(followed_playlists_query, {'user_id': user[0]}).fetchall()
-
-            user_id = user[0]
+                SELECT Playlist.* FROM Playlist
+                JOIN createORfollow ON Playlist.PlaylistID = createORfollow.PlaylistID
+                WHERE createORfollow.userid = :user_id AND createORfollow.creates = FALSE
+            """)
+            followed_playlists = g.conn.execute(followed_playlists_query, {'user_id': user_id}).fetchall()
 
             return render_template('profile.html', user=user, songs=listened_songs, artists=followed_artists, created_playlists=created_playlists, followed_playlists=followed_playlists)
         else:
             return "User not found", 404
     else:
         return redirect(url_for('login'))
+
     
 # Route for the recommended songs button on the user's profile page
-@app.route('/recommendations/<user_id>')
-def recommendations(user_id):
-    # Step 1: Find the artists the user follows
-    artist_query = text("SELECT ArtistID FROM Follows WHERE userID = :user_id")
-    followed_artists = g.conn.execute(artist_query, {'user_id': user_id}).fetchall()
+# Route for the recommended songs button on the user's profile page
+@app.route('/recommendations/<username>')
+def recommendations(username):
+    print(f"Username for recommendations: '{username}' (Type: {type(username)})")  # Debug log
 
-    # Step 2: Select songs and artist names from these artists
+    # 🔥 Step 1: Get the user_id from the Users table
+    user_query = text("SELECT TRIM(userID) FROM Users WHERE UserName = :username")
+    user = g.conn.execute(user_query, {'username': username}).fetchone()
+    
+    if not user:
+        print(f"User {username} not found in Users table")
+        return "User not found"
+    
+    user_id = user[0]  # Extract user_id and trim
+    print(f"User ID for recommendations: '{user_id}' (Type: {type(user_id)})")  # Debug log
+
+    # 🔥 Step 2: Get the songs the user has already listened to
+    listened_songs_query = text("""
+        SELECT TRIM(songID)
+        FROM listensTO
+        WHERE TRIM(userID) = :user_id
+    """)
+    listened_song_ids = [song[0] for song in g.conn.execute(listened_songs_query, {'user_id': user_id}).fetchall()]
+    print(f"Listened songs for user {user_id}: {listened_song_ids}")  # Debug log
+
+    # 🔥 Step 3: Get the genres the user follows
+    genre_query = text("""
+        SELECT DISTINCT TRIM(Genre.Name)
+        FROM Artist
+        JOIN follows ON TRIM(Artist.ArtistID) = TRIM(follows.ArtistID)
+        JOIN belongsTo2 ON TRIM(Artist.ArtistID) = TRIM(belongsTo2.ArtistID)
+        JOIN Genre ON TRIM(belongsTo2.GenreID) = TRIM(Genre.GenreID)
+        WHERE TRIM(follows.userID) = :user_id
+    """)
+    followed_genres = g.conn.execute(genre_query, {'user_id': user_id}).fetchall()
+    print(f"Genres followed by User {user_id}: {followed_genres}")  # Debug log
+
+    if not followed_genres:
+        print(f"No genres found for user {user_id}")
+        return "No genres found for this user"
+
+    # 🔥 Step 4: Get songs in those genres that the user has NOT listened to
     recommended_songs = []
-    for artist in followed_artists:
+    for genre in followed_genres:
+        genre_name = genre[0].strip()
+        if not genre_name:
+            continue
+
+        print(f"Processing Genre: {genre_name}")  # Debug log
+
         song_query = text("""
-                          SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID 
-                          FROM Song
-                          JOIN contains2 ON Song.songID = contains2.songID
-                          JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                          JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-                          WHERE Artist.ArtistID = :artist_id
-                          ORDER BY RANDOM() LIMIT 5
-                          """)
-        songs = g.conn.execute(song_query, {'artist_id': artist[0]}).fetchall()
+            SELECT *
+            FROM (
+                SELECT Song.*, TRIM(Artist.Name) AS ArtistName, TRIM(Artist.ArtistID)
+                FROM Song
+                JOIN contains2 ON TRIM(Song.songID) = TRIM(contains2.songID)
+                JOIN albumBelong ON TRIM(contains2.AlbumID) = TRIM(albumBelong.AlbumID)
+                JOIN Artist ON TRIM(albumBelong.ArtistID) = TRIM(Artist.ArtistID)
+                WHERE TRIM(Song.Genre) = :genre
+                AND TRIM(Song.songID) NOT IN :listened_song_ids
+            ) AS distinct_songs
+            ORDER BY RANDOM()
+            LIMIT 5
+        """)
+
+        songs = g.conn.execute(song_query, {
+            'genre': genre_name,
+            'listened_song_ids': tuple(listened_song_ids) if listened_song_ids else ('',)  # Avoid empty IN clause
+        }).fetchall()
+        
+        print(f"Songs recommended for User {user_id} in Genre {genre_name}: {songs}")  # Debug log
         recommended_songs.extend(songs)
 
-    # Step 3: Present recommendations to the user
     return render_template('recommendations.html', songs=recommended_songs)
 
-# Route for the recommended artists button on the user's profile page
-@app.route('/recommend_artists/<user_id>')
-def recommend_artists(user_id):
-    # Step 1: Fetch genres of artists the user follows
-    genre_query = text("""
-                       SELECT DISTINCT Genre.GenreID
-                       FROM Artist
-                       JOIN Follows ON Artist.ArtistID = Follows.ArtistID
-                       JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
-                       JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
-                       WHERE Follows.userID = :user_id
-                       """)
-    followed_genres = g.conn.execute(genre_query, {'user_id': user_id}).fetchall()
 
-    # Step 2: Fetch artists in those genres that the user does not follow
+
+
+# Route for the recommended artists button on the user's profile page
+@app.route('/recommend_artists/<username>')
+def recommend_artists(username):
+    print(f"Username for recommendations: '{username}' (Type: {type(username)})")  # Debug log
+
+    # 🔥 Step 1: Get the user_id from the Users table
+    user_query = text("SELECT TRIM(userID) FROM Users WHERE UserName = :username")
+    user = g.conn.execute(user_query, {'username': username}).fetchone()
+    
+    if not user:
+        print(f"User {username} not found in Users table")
+        return "User not found"
+    
+    user_id = user[0].strip()  # Remove whitespace
+    print(f"User ID for recommendations: '{user_id}' (Type: {type(user_id)})")  # Debug log
+    
+    # 🔥 Step 2: Get genres the user follows
+    genre_query = text("""
+        SELECT DISTINCT TRIM(Genre.GenreID)
+        FROM Artist
+        JOIN follows ON TRIM(Artist.ArtistID) = TRIM(follows.ArtistID)
+        JOIN belongsTo2 ON TRIM(Artist.ArtistID) = TRIM(belongsTo2.ArtistID)
+        JOIN Genre ON TRIM(belongsTo2.GenreID) = TRIM(Genre.GenreID)
+        WHERE TRIM(follows.userID) = :user_id
+    """)
+    followed_genres = g.conn.execute(genre_query, {'user_id': user_id}).fetchall()
+    print(f"Genres Followed for User {user_id}: {followed_genres}")  # Debug log
+
+    if not followed_genres:
+        print(f"No genres found for user {user_id}")
+        return "No genres found for this user"
+
+    # 🔥 Step 3: Get artists in those genres that the user does not follow
     recommended_artists = []
     for genre in followed_genres:
+        if not genre[0]:
+            continue
+
+        print(f"Processing Genre: {genre[0]}")  # Debug log
         artist_query = text("""
-                            SELECT Artist.*
-                            FROM Artist
-                            JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
-                            WHERE belongsTo2.GenreID = :genre_id
-                            AND Artist.ArtistID NOT IN (
-                                SELECT ArtistID FROM Follows WHERE userID = :user_id
-                            )
-                            LIMIT 5
-                            """)
-        artists = g.conn.execute(artist_query, {'genre_id': genre[0], 'user_id': user_id}).fetchall()
+            SELECT DISTINCT Artist.*
+            FROM Artist
+            JOIN belongsTo2 ON TRIM(Artist.ArtistID) = TRIM(belongsTo2.ArtistID)
+            WHERE TRIM(belongsTo2.GenreID) = :genre_id 
+            AND NOT EXISTS (
+                SELECT 1 FROM Follows 
+                WHERE TRIM(Follows.ArtistID) = TRIM(Artist.ArtistID) 
+                AND TRIM(Follows.userID) = :user_id
+            )
+            LIMIT 5
+        """)
+        
+        artists = g.conn.execute(artist_query, {'genre_id': genre[0].strip(), 'user_id': user_id}).fetchall()
+        print(f"Artists recommended for User {user_id} in Genre {genre[0].strip()}: {artists}")  # Debug log
+
         recommended_artists.extend(artists)
 
-    # Step 3: Present recommendations to the user
     return render_template('recommend_artists.html', artists=recommended_artists)
 
+
+
+
+
 #Route for the recommended playlists button on the user's profile page
-@app.route('/recommend_playlists/<user_id>')
-def recommend_playlists(user_id):
+# Route for the recommended playlists button on the user's profile page
+@app.route('/recommend_playlists/<username>')
+def recommend_playlists(username):
+    print(f"Username for playlist recommendations: '{username}' (Type: {type(username)})")  # Debug log
 
-    # Step 1: Fetch the artists followed by the user
-    artist_query = text("SELECT ArtistID FROM Follows WHERE userID = :user_id")
+    # 🔥 Step 1: Get the user_id from the Users table
+    user_query = text("SELECT TRIM(userID) FROM Users WHERE UserName = :username")
+    user = g.conn.execute(user_query, {'username': username}).fetchone()
+    
+    if not user:
+        print(f"User {username} not found in Users table")
+        return "User not found"
+    
+    user_id = user[0]  # Extract user_id and trim
+    print(f"User ID for playlist recommendations: '{user_id}' (Type: {type(user_id)})")  # Debug log
+
+    # 🔥 Step 2: Fetch the artists followed by the user
+    artist_query = text("""
+        SELECT TRIM(ArtistID) 
+        FROM follows 
+        WHERE TRIM(userID) = :user_id
+    """)
     followed_artists = g.conn.execute(artist_query, {'user_id': user_id}).fetchall()
+    print(f"Followed Artists for User {user_id}: {followed_artists}")  # Debug log
 
-    # Convert followed artists to a list of artist IDs
-    artist_ids = [artist[0] for artist in followed_artists]
+    # 🔥 Step 3: Convert followed artists to a list of artist IDs
+    artist_ids = [artist[0].strip() for artist in followed_artists]
 
     if not artist_ids:
+        print(f"No artists followed for user {user_id}")
         return "No artists followed, so no playlist recommendations available."
 
-    # Step 2: Fetch playlists that contain songs by these artists
+    # 🔥 Step 4: Fetch playlists that contain songs by these artists
     playlist_query = text("""
-                        SELECT DISTINCT Playlist.PlaylistID, Playlist.Title
-                        FROM Playlist
-                        JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
-                        JOIN contains2 ON contains1.songID = contains2.songID
-                        JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                        WHERE albumBelong.ArtistID IN :artist_ids
-                        """)
+        SELECT DISTINCT Playlist.PlaylistID, Playlist.Title
+        FROM Playlist
+        JOIN contains1 ON TRIM(Playlist.PlaylistID) = TRIM(contains1.PlaylistID)
+        JOIN contains2 ON TRIM(contains1.songID) = TRIM(contains2.songID)
+        JOIN albumBelong ON TRIM(contains2.AlbumID) = TRIM(albumBelong.AlbumID)
+        WHERE TRIM(albumBelong.ArtistID) IN :artist_ids
+    """)
     playlists = g.conn.execute(playlist_query, {'artist_ids': tuple(artist_ids)}).fetchall()
+    print(f"Playlists for User {user_id}: {playlists}")  # Debug log
 
-    # Step 3: Present the recommended playlists to the user
+    # 🔥 Step 5: Render the recommended playlists
     return render_template('recommend_playlists.html', playlists=playlists)
 
 #Route for searching a playlist with a link to the playlist's page
