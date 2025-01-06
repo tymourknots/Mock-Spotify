@@ -1,50 +1,25 @@
-
-"""
-Columbia's COMS W4111.001 Introduction to Databases
-Example Webserver
-To run locally:
-    python3 server.py
-Go to http://localhost:8111 in your browser.
-A debugger such as "pdb" may be helpful for debugging.
-Read about it online.
-"""
 import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort, session, url_for
+from flask import Flask, request, render_template, g, redirect, Response, abort, session, url_for, jsonify, send_from_directory
+from flask_cors import CORS
+
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
-app = Flask(__name__, template_folder=tmpl_dir)
+app = Flask(__name__, static_folder='static')
 app.secret_key = os.urandom(24)
+CORS(app)
 
-#
-# The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
-#
-# XXX: The URI should be in the format of:
-#
-#     postgresql://USER:PASSWORD@34.75.94.195/proj1part2
-#
-# For example, if you had username gravano and password foobar, then the following line would be:
-#
-#     DATABASEURI = "postgresql://gravano:foobar@34.75.94.195/proj1part2"
-#
+
 DATABASEURI = "postgresql://postgres:trymour@localhost:5432/postgres"
 
 
 
-#
-# This line creates a database engine that knows how to connect to the URI above.
-#
 engine = create_engine(DATABASEURI)
 
-#
-# Example of running queries in your database
-# Note that this will probably not work if you already have a table named 'test' in your database, containing meaningful data. This is only an example showing you how to run queries in your database using SQLAlchemy.
-#
 conn = engine.connect()
 
-# The string needs to be wrapped around text()
 
 conn.execute(text("""CREATE TABLE IF NOT EXISTS test (
   id serial,
@@ -84,102 +59,24 @@ def teardown_request(exception):
     pass
 
 
-#
-# @app.route is a decorator around index() that means:
-#   run index() whenever the user tries to access the "/" path using a GET request
-#
-# If you wanted the user to go to, for example, localhost:8111/foobar/ with POST or GET then you could use:
-#
-#       @app.route("/foobar/", methods=["POST", "GET"])
-#
-# PROTIP: (the trailing / in the path is important)
-#
-# see for routing: https://flask.palletsprojects.com/en/2.0.x/quickstart/?highlight=routing
-# see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
-#
 @app.route('/')
-def index():
-  """
-  request is a special object that Flask provides to access web request information:
+@app.route('/<path:path>')
+def serve_react(path=None):
+    """
+    Serve the React app from the build folder.
+    """
+    if path is None or path == '':
+        path = 'index.html'
+    return send_from_directory('../mock-spotify/build', path)
 
-  request.method:   "GET" or "POST"
-  request.form:     if the browser submitted a form, this contains the data in the form
-  request.args:     dictionary of URL arguments, e.g., {a:1, b:2} for http://localhost?a=1&b=2
+@app.route('/api/session', methods=['GET'])
+def get_session_data():
+    """
+    Return session data for the logged-in user.
+    """
+    username = session.get('username', None)
+    return jsonify({'username': username})
 
-  See its API: https://flask.palletsprojects.com/en/2.0.x/api/?highlight=incoming%20request%20data
-
-  """
-
-  # DEBUG: this is debugging code to see what request looks like
-  print(request.args)
-
-
-  #
-  # example of a database query 
-  #
-  cursor = g.conn.execute(text("SELECT name FROM test"))
-  g.conn.commit()
-
-  # 2 ways to get results
-
-  # Indexing result by column number
-  names = []
-  for result in cursor:
-    names.append(result[0])  
-
-  # Indexing result by column name
-  names = []
-  results = cursor.mappings().all()
-  for result in results:
-    names.append(result["name"])
-  cursor.close()
-
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #
-  #     # creates a <div> tag for each element in data
-  #     # will print:
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-  context = dict(data = names)
-
-
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
-  return render_template("index.html", **context)
-
-#
-# This is an example of a different path.  You can see it at:
-#
-#     localhost:8111/another
-#
-# Notice that the function name is another() rather than index()
-# The functions for each app.route need to have different names
-#
-@app.route('/another')
-def another():
-  return render_template("another.html")
 
 
 # Example of adding new data to the database
@@ -192,86 +89,137 @@ def add():
   return redirect('/')
 
 # Route for searching a song and also displaying the song's page
-@app.route('/search_song')
+@app.route('/api/search_song', methods=['GET'])
 def search_song():
-    song_title = request.args.get('song_title')
+    song_title = request.args.get('song_title', '').strip()
     song_id = request.args.get('song_id')
+
+    print(f"Received song_title: '{song_title}'")  # Debugging
 
     result = []
     playlists = []
 
     if song_id or song_title:
-        # Fetch song, album, artist, and genre details
         query = text("""
-                    SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID, 
-                      albumBelong.Title AS AlbumTitle, albumBelong.AlbumID, albumBelong.Genre AS AlbumGenre
-                    FROM Song
-                    JOIN contains2 ON Song.songID = contains2.songID
-                    JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                    JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-                    WHERE Song.songID = :song_id OR Song.title = :song_title
-                    """)
-        result = g.conn.execute(query, {'song_id': song_id, 'song_title': song_title}).fetchall()
+            SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID, 
+                   albumBelong.Title AS AlbumTitle, albumBelong.AlbumID, albumBelong.Genre AS AlbumGenre
+            FROM Song
+            JOIN contains2 ON Song.songID = contains2.songID
+            JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+            JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+            WHERE Song.songID = :song_id OR LOWER(Song.title) LIKE LOWER(:song_title)
+        """)
+        result = g.conn.execute(query, {'song_id': song_id, 'song_title': f"%{song_title}%"}).fetchall()
+
+        print(f"Query returned {len(result)} results.")  # Debugging
 
         if result and not song_id:
-            song_id = result[0][0]  # Extract the song ID from the first result if searching by title
+            song_id = result[0][0]  # Extract song ID for playlist query
 
-        # Fetch playlists containing the song
         if song_id:
             playlist_query = text("""
-                                  SELECT Playlist.* FROM Playlist
-                                  JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
-                                  WHERE contains1.songID = :song_id
-                                  """)
+                SELECT Playlist.* FROM Playlist
+                JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
+                WHERE contains1.songID = :song_id
+            """)
             playlists = g.conn.execute(playlist_query, {'song_id': song_id}).fetchall()
 
-    return render_template("search_song.html", songs=result, playlists=playlists)
+    songs = [
+        {
+            "id": song[0].strip(),
+            "title": song[1],
+            "album": {"id": song[10].strip(), "title": song[9]},
+            "artist": {"id": song[8], "name": song[7]},
+            "genre": song[-1],
+            "duration": song[3],
+            "releaseYear": song[4],
+            "plays": song[6],
+        }
+        for song in result
+    ]
+
+    playlists_data = [{"id": playlist[0].strip(), "title": playlist[1]} for playlist in playlists]
+
+    print(f"Returning {len(songs)} songs and {len(playlists_data)} playlists.")  # Debugging
+    return jsonify({"songs": songs, "playlists": playlists_data})
+
+
 
 # Route for searching an album with a link to the album's page
-@app.route('/search_album')
-def search_album():
+@app.route('/api/search_album', methods=['GET'])
+def api_search_album():
     album_title = request.args.get('album_title')
+    print(f"Received album_title: {album_title}")  # Debugging log
 
     if album_title:
-        # Fetches albums with matching album_title with their respective artist names
         query = text("""
                      SELECT albumBelong.*, Artist.Name AS ArtistName
                      FROM albumBelong
                      JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-                     WHERE Title = :album_title
+                     WHERE LOWER(TRIM(Title)) = LOWER(TRIM(:album_title))
                      """)
         result = g.conn.execute(query, {'album_title': album_title}).fetchall()
+        print(f"Query result: {result}")  # Debugging log
     else:
         result = []
+        print("No album_title provided.")  # Debugging log
 
-    return render_template("search_album.html", albums=result)
+    # Format the response for React
+    albums = [{
+        "id": album[0].strip(),
+        "title": album[1].strip(),
+        "releaseYear": album[2],
+        "genre": album[3],
+        "artist": album[5].strip()
+    } for album in result]
 
-# Route for displaying the album's page
+    print(f"Albums response: {albums}")  # Debugging log
+    return jsonify({"albums": albums})
+
+
+
+
+# Routes for displaying the album's page
 @app.route('/album/<album_id>')
 def album_details(album_id):
-    # Fetch album details (including artist and genre)
-    album_query = text("""
-                     SELECT albumBelong.*, Artist.Name AS ArtistName, Artist.ArtistID, Genre.Name AS GenreName
-                     FROM albumBelong
-                     JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-                     JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
-                     JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
-                     WHERE albumBelong.AlbumID = :album_id
-                     """)
-    album_details = g.conn.execute(album_query, {'album_id': album_id}).fetchone()
+    return render_template('album_details.html')
 
-    # Fetch songs in the album
+@app.route('/api/album/<album_id>')
+def api_album_details(album_id):
+    album_query = text("""
+        SELECT albumBelong.*, Artist.Name AS ArtistName, Artist.ArtistID, Genre.GenreID, Genre.Name AS GenreName
+        FROM albumBelong
+        JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+        JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+        JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
+        WHERE albumBelong.AlbumID = :album_id
+    """)
+    album = g.conn.execute(album_query, {'album_id': album_id}).fetchone()
+
     songs_query = text("""
-                       SELECT song.* FROM song
-                       JOIN contains2 ON song.songID = contains2.songID
-                       WHERE contains2.AlbumID = :album_id
-                       """)
+        SELECT song.* FROM song
+        JOIN contains2 ON song.songID = contains2.songID
+        WHERE contains2.AlbumID = :album_id
+    """)
     songs = g.conn.execute(songs_query, {'album_id': album_id}).fetchall()
 
-    if album_details:
-        return render_template('album_details.html', album=album_details, songs=songs)
+    if album:
+        # Adjust indices based on your database schema
+        album_details = {
+            "title": album[1],
+            "releaseYear": album[2],
+            "genreId": album[-2].strip(),  # Ensure the correct index for GenreID
+            "genreName": album[-1],        # Ensure the correct index for GenreName
+            "artistId": album[4].strip(),
+            "artistName": album[5]
+        }
+        song_details = [{"id": song[0].strip(), "title": song[1], "duration": song[3]} for song in songs]
+        return jsonify({"album": album_details, "songs": song_details})
     else:
-        return "Album not found", 404
+        return jsonify({"error": "Album not found"}), 404
+
+
+
 
 # Route for searching an artist with a link to the artist's page
 @app.route('/search_artist')
