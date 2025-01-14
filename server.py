@@ -237,68 +237,61 @@ def search_artist():
     return render_template('search_artist.html', artists=result)
 
 # Route for displaying the artist's page
-@app.route('/artist/<artist_id>')
-def artist_details(artist_id):
-    # Fetches artist details with their respective genres
-    artist_query = text("""
-                      SELECT Artist.*, Genre.Name AS GenreName, Genre.GenreID
-                      FROM Artist
-                      JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
-                      JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
-                      WHERE Artist.ArtistID = :artist_id
-                      """)
-    artist_details = g.conn.execute(artist_query, {'artist_id': artist_id}).fetchone()
+@app.route('/api/search_artist', methods=['GET'])
+def api_search_artist():
+    artist_name = request.args.get('artist_name')
+    print(f"Received artist_name: {artist_name}")  # Debugging log
 
-    # Fetches albums by artist
-    albums_query = text("""
-                      SELECT * FROM albumBelong WHERE ArtistID = :artist_id
-                      """)
-    albums = g.conn.execute(albums_query, {'artist_id': artist_id}).fetchall()
+    if artist_name:
+        query = text("""
+                     SELECT * FROM Artist WHERE Name ILIKE :artist_name
+                     """)
+        result = g.conn.execute(query, {'artist_name': f'%{artist_name}%'}).fetchall()
+        print(f"Query result: {result}")  # Debugging log
+    else:
+        result = []
+        print("No artist_name provided.")  # Debugging log
 
-    # Fetches songs by artist
-    songs_query = text("""
-                    SELECT Song.* FROM Song
-                    JOIN contains2 ON Song.songID = contains2.songID
-                    JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                    WHERE albumBelong.ArtistID = :artist_id
-                    """)
-    songs = g.conn.execute(songs_query, {'artist_id': artist_id}).fetchall()
+    # Format the response for React
+    artists = [{
+        "id": artist[0].strip(),
+        "name": artist[1].strip(),
+        "biography": artist[2]
+    } for artist in result]
 
-    return render_template('artist_details.html', artist=artist_details, albums=albums, songs=songs)
+    print(f"Artists response: {artists}")  # Debugging log
+    return jsonify({"artists": artists})
+
 
 # Route for searching a genre with a link to the genre's page
-@app.route('/search_genre')
-def search_genre():
+@app.route('/api/search_genre', methods=['GET'])
+def api_search_genre():
+    print("Reached /api/search_genre route")  # Add this debug log
     genre_name = request.args.get('genre_name')
+    print(f"Received genre_name: {genre_name}")  # Log received parameter
+    print(f"Received genre_name: {genre_name}")  # Debugging log
 
-    # Fetches genres matching genre_name
     if genre_name:
         query = text("""
                      SELECT * FROM Genre
                      WHERE Name ILIKE :genre_name
                      """)
         result = g.conn.execute(query, {'genre_name': f'%{genre_name}%'}).fetchall()
+        print(f"Query result: {result}")  # Debugging log
     else:
         result = []
+        print("No genre_name provided.")  # Debugging log
 
-    return render_template("search_genre.html", genres=result)
+    # Format the response for React
+    genres = [{
+        "id": genre[0].strip(),
+        "name": genre[1].strip(),
+        "description": genre[2].strip()
+    } for genre in result]
 
-# Route is same as above (searches for a genre with a link to the page) except it takes in the genre_name as a parameter instead of user input
-# Meant to connect Song pages with Genre pages and vice versa
-@app.route('/search_g/<genre_name>')
-def search_g(genre_name):
-    
-    # Fetches genres matching genre_name
-    genre_query = text("""
-                       SELECT * FROM Genre
-                       WHERE Name ILIKE :genre_name
-                       """)
-    matching_genres = g.conn.execute(genre_query, {'genre_name': f'%{genre_name}%'}).fetchall()
+    print(f"Genres response: {genres}")  # Debugging log
+    return jsonify({"genres": genres})
 
-    if matching_genres:
-        return render_template('search_genre.html', genres=matching_genres)
-    else:
-        return f"No genres found matching: {genre_name}", 404
 
 # Route for displaying the genre's page
 @app.route('/genre/<genre_id>')
@@ -334,6 +327,31 @@ def genre_details(genre_id):
     songs = g.conn.execute(songs_query, {'genre_id': genre_id}).fetchall()
 
     return render_template('genre_details.html', genre=genre_details, artists=artists, albums=albums, songs=songs)
+
+#Route for searching a playlist with a link to the playlist's page
+@app.route('/api/search_playlist', methods=['GET'])
+def api_search_playlist():
+    playlist_title = request.args.get('playlist_title')
+
+    if playlist_title:
+        query = text("""
+                     SELECT * FROM Playlist
+                     WHERE Title ILIKE :playlist_title
+                     """)
+        result = g.conn.execute(query, {'playlist_title': f'%{playlist_title}%'}).fetchall()
+    else:
+        result = []
+
+    # Format the response for React
+    playlists = [{
+        "id": playlist[0].strip(),
+        "title": playlist[1].strip(),
+        "description": playlist[2].strip(),
+        "creationYear": playlist[3]
+    } for playlist in result]
+
+    return jsonify({"playlists": playlists})
+
 
 # Route for logging in
 @app.route('/login', methods=['GET', 'POST'])
@@ -602,22 +620,7 @@ def recommend_playlists(username):
     # 🔥 Step 5: Render the recommended playlists
     return render_template('recommend_playlists.html', playlists=playlists)
 
-#Route for searching a playlist with a link to the playlist's page
-@app.route('/search_playlist')
-def search_playlist():
-    playlist_title = request.args.get('playlist_title')
 
-    if playlist_title:
-        # Fetch playlists with matching playlist_title
-        query = text("""
-                     SELECT * FROM Playlist
-                     WHERE Title ILIKE :playlist_title
-                     """)
-        result = g.conn.execute(query, {'playlist_title': f'%{playlist_title}%'}).fetchall()
-    else:
-        result = []
-
-    return render_template("search_playlist.html", playlists=result)
 
 #Route for displaying the playlist's page
 @app.route('/playlist/<playlist_id>')
