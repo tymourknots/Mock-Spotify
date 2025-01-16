@@ -92,29 +92,31 @@ def add():
 @app.route('/api/search_song', methods=['GET'])
 def search_song():
     song_title = request.args.get('song_title', '').strip()
-    song_id = request.args.get('song_id')
+    song_id = request.args.get('song_id', '').strip()
 
-    print(f"Received song_title: '{song_title}'")  # Debugging
+    if not song_id and not song_title:
+        # Return an error if both parameters are missing
+        return jsonify({"songs": [], "playlists": [], "error": "No song ID or title provided"}), 400
 
     result = []
     playlists = []
 
+    # Only execute the query if song_id or song_title is provided
     if song_id or song_title:
         query = text("""
-            SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID, 
-                   albumBelong.Title AS AlbumTitle, albumBelong.AlbumID, albumBelong.Genre AS AlbumGenre
+            SELECT Song.*, Artist.Name AS ArtistName, Artist.ArtistID,
+              albumBelong.Title AS AlbumTitle, albumBelong.AlbumID, albumBelong.Genre AS AlbumGenre
             FROM Song
             JOIN contains2 ON Song.songID = contains2.songID
             JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
             JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
-            WHERE Song.songID = :song_id OR LOWER(Song.title) LIKE LOWER(:song_title)
+            WHERE (:song_id IS NOT NULL AND Song.songID = :song_id)
+               OR (:song_title IS NOT NULL AND Song.title ILIKE :song_title)
         """)
-        result = g.conn.execute(query, {'song_id': song_id, 'song_title': f"%{song_title}%"}).fetchall()
-
-        print(f"Query returned {len(result)} results.")  # Debugging
+        result = g.conn.execute(query, {'song_id': song_id or None, 'song_title': f"%{song_title}%" if song_title else None}).fetchall()
 
         if result and not song_id:
-            song_id = result[0][0]  # Extract song ID for playlist query
+            song_id = result[0][0]  # Extract the song ID from the first result if searching by title
 
         if song_id:
             playlist_query = text("""
@@ -124,24 +126,23 @@ def search_song():
             """)
             playlists = g.conn.execute(playlist_query, {'song_id': song_id}).fetchall()
 
-    songs = [
-        {
-            "id": song[0].strip(),
-            "title": song[1],
-            "album": {"id": song[10].strip(), "title": song[9]},
-            "artist": {"id": song[8], "name": song[7]},
-            "genre": song[-1],
-            "duration": song[3],
-            "releaseYear": song[4],
-            "plays": song[6],
-        }
-        for song in result
-    ]
+    # Format response data
+    songs = [{
+        "id": song[0].strip(),
+        "title": song[1],
+        "album": {"id": song[10].strip(), "title": song[9]},
+        "artist": {"id": song[8], "name": song[7]},
+        "genre": song[-1],
+        "duration": song[3],
+        "releaseYear": song[4],
+        "plays": song[6]
+    } for song in result]
 
     playlists_data = [{"id": playlist[0].strip(), "title": playlist[1]} for playlist in playlists]
 
-    print(f"Returning {len(songs)} songs and {len(playlists_data)} playlists.")  # Debugging
     return jsonify({"songs": songs, "playlists": playlists_data})
+
+
 
 
 

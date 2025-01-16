@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 
 function SearchAlbum() {
   const [albums, setAlbums] = useState([]);
@@ -18,7 +18,6 @@ function SearchAlbum() {
     fetch(`http://localhost:8111/api/search_album?album_title=${encodeURIComponent(albumTitle)}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log('Fetched album data:', data);
         setAlbums(data.albums || []);
         setLoading(false);
       })
@@ -43,7 +42,7 @@ function SearchAlbum() {
             <p>Release Year: {album.releaseYear}</p>
             <p>Genre: {album.genre}</p>
             <p>
-              <a href={`/album/${album.id}`}>View Album Details</a>
+              <Link to={`/album/${album.id}`}>View Album Details</Link>
             </p>
           </div>
         ))

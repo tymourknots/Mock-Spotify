@@ -3,33 +3,47 @@ import { useSearchParams } from 'react-router-dom';
 
 function SearchSong() {
   const [songs, setSongs] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    const songId = searchParams.get('song_id');
     const songTitle = searchParams.get('song_title');
-    if (!songTitle) {
+
+    if (!songId && !songTitle) {
       setSongs([]);
+      setPlaylists([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    fetch(`http://localhost:8111/api/search_song?song_title=${encodeURIComponent(songTitle)}`)
-      .then((response) => response.json())
+    fetch(
+      `http://localhost:8111/api/search_song?${
+        songId ? `song_id=${songId}` : `song_title=${encodeURIComponent(songTitle)}`
+      }`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('No songs found');
+        }
+        return response.json();
+      })
       .then((data) => {
         setSongs(data.songs || []);
+        setPlaylists(data.playlists || []);
         setLoading(false);
       })
-      .catch((error) => {
-        console.error('Error fetching song data:', error);
+      .catch((err) => {
+        setError(err.message);
         setLoading(false);
       });
   }, [searchParams]);
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>{error}</p>;
 
   return (
     <div>
@@ -38,15 +52,10 @@ function SearchSong() {
         songs.map((song) => (
           <div key={song.id}>
             <p>Title: {song.title}</p>
-            <p>
-              Album: <a href={`/album/${song.album.id}`}>{song.album.title}</a>
-            </p>
-            <p>
-              Artist: <a href={`/artist/${song.artist.id}`}>{song.artist.name}</a>
-            </p>
+            <p>Album: {song.album.title}</p>
+            <p>Artist: {song.artist.name}</p>
             <p>Genre: {song.genre}</p>
-            <p>Release Year: {song.releaseYear}</p>
-            <p>Plays: {song.plays}</p>
+            <p>Duration: {song.duration} seconds</p>
           </div>
         ))
       ) : (

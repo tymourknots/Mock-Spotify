@@ -6,6 +6,7 @@ import SearchAlbum from './SearchAlbum';
 import SearchArtist from './SearchArtist';
 import SearchGenre from './SearchGenre';
 import SearchPlaylist from './SearchPlaylist';
+import AlbumDetails from './AlbumDetails'; // Import the new component
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/search_artist" element={<SearchArtist />} />
         <Route path="/search_genre" element={<SearchGenre />} />
         <Route path="/search_playlist" element={<SearchPlaylist />} />
+        <Route path="/album/:albumId" element={<AlbumDetails />} /> {/* Add this route */}
       </Routes>
     </Router>
   );
