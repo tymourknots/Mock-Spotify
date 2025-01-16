@@ -264,6 +264,55 @@ def api_search_artist():
     return jsonify({"artists": artists})
 
 
+
+# Route for displaying artists' pages.
+@app.route('/api/artist/<artist_id>', methods=['GET'])
+def api_artist_details(artist_id):
+    # Fetch artist details
+    artist_query = text("""
+        SELECT Artist.*, Genre.Name AS GenreName, Genre.GenreID
+        FROM Artist
+        JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+        JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
+        WHERE Artist.ArtistID = :artist_id
+    """)
+    artist = g.conn.execute(artist_query, {'artist_id': artist_id}).fetchone()
+
+    # Fetch albums by artist
+    albums_query = text("""
+        SELECT * FROM albumBelong WHERE ArtistID = :artist_id
+    """)
+    albums = g.conn.execute(albums_query, {'artist_id': artist_id}).fetchall()
+
+    # Fetch songs by artist
+    songs_query = text("""
+        SELECT Song.* FROM Song
+        JOIN contains2 ON Song.songID = contains2.songID
+        JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+        WHERE albumBelong.ArtistID = :artist_id
+    """)
+    songs = g.conn.execute(songs_query, {'artist_id': artist_id}).fetchall()
+
+    if artist:
+        artist_details = {
+            "id": artist[0].strip(),
+            "name": artist[1],
+            "biography": artist[2],
+            "genreId": artist[4].strip(),
+            "genreName": artist[3]
+        }
+        album_details = [
+            {"id": album[0].strip(), "title": album[1], "releaseYear": album[2]} for album in albums
+        ]
+        song_details = [
+            {"id": song[0].strip(), "title": song[1], "genre": song[2]} for song in songs
+        ]
+        return jsonify({"artist": artist_details, "albums": album_details, "songs": song_details})
+    else:
+        return jsonify({"error": "Artist not found"}), 404
+
+
+
 # Route for searching a genre with a link to the genre's page
 @app.route('/api/search_genre', methods=['GET'])
 def api_search_genre():
