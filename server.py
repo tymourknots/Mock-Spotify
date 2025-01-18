@@ -344,44 +344,66 @@ def api_search_genre():
 
 
 # Route for displaying the genre's page
-@app.route('/genre/<genre_id>')
-def genre_details(genre_id):
+@app.route('/api/genre/<genre_id>', methods=['GET'])
+def api_genre_details(genre_id):
     # Fetch genre details
     genre_query = text("""
-                       SELECT * FROM Genre WHERE GenreID = :genre_id
-                       """)
-    genre_details = g.conn.execute(genre_query, {'genre_id': genre_id}).fetchone()
+        SELECT * FROM Genre WHERE GenreID = :genre_id
+    """)
+    genre = g.conn.execute(genre_query, {'genre_id': genre_id}).fetchone()
 
     # Fetch artists in the genre
     artists_query = text("""
-                         SELECT Artist.* FROM Artist
-                         JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
-                         WHERE belongsTo2.GenreID = :genre_id
-                         """)
+        SELECT Artist.* FROM Artist
+        JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+        WHERE belongsTo2.GenreID = :genre_id
+    """)
     artists = g.conn.execute(artists_query, {'genre_id': genre_id}).fetchall()
 
     # Fetch albums in the genre
     albums_query = text("""
-                        SELECT albumBelong.* FROM albumBelong
-                        WHERE albumBelong.Genre = (SELECT Name FROM Genre WHERE GenreID = :genre_id)
-                        """)
+        SELECT albumBelong.* FROM albumBelong
+        WHERE albumBelong.Genre = (SELECT Name FROM Genre WHERE GenreID = :genre_id)
+    """)
     albums = g.conn.execute(albums_query, {'genre_id': genre_id}).fetchall()
 
     # Fetch songs in the genre
     songs_query = text("""
-                       SELECT Song.* FROM Song
-                       JOIN contains2 ON Song.songID = contains2.songID
-                       JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
-                       WHERE albumBelong.Genre = (SELECT Name FROM Genre WHERE GenreID = :genre_id)
-                       """)
+        SELECT Song.* FROM Song
+        JOIN contains2 ON Song.songID = contains2.songID
+        JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+        WHERE albumBelong.Genre = (SELECT Name FROM Genre WHERE GenreID = :genre_id)
+    """)
     songs = g.conn.execute(songs_query, {'genre_id': genre_id}).fetchall()
 
-    return render_template('genre_details.html', genre=genre_details, artists=artists, albums=albums, songs=songs)
+    if genre:
+        genre_details = {
+            "id": genre[0].strip(),
+            "name": genre[1],
+            "description": genre[2]
+        }
+        artist_details = [
+            {"id": artist[0].strip(), "name": artist[1]} for artist in artists
+        ]
+        album_details = [
+            {"id": album[0].strip(), "title": album[1]} for album in albums
+        ]
+        song_details = [
+            {"id": song[0].strip(), "title": song[1], "duration": song[3]} for song in songs
+        ]
+        return jsonify({
+            "genre": genre_details,
+            "artists": artist_details,
+            "albums": album_details,
+            "songs": song_details
+        })
+    else:
+        return jsonify({"error": "Genre not found"}), 404
 
-#Route for searching a playlist with a link to the playlist's page
 @app.route('/api/search_playlist', methods=['GET'])
 def api_search_playlist():
     playlist_title = request.args.get('playlist_title')
+    print(f"Received playlist_title: {playlist_title}")  # Debugging log
 
     if playlist_title:
         query = text("""
@@ -389,8 +411,10 @@ def api_search_playlist():
                      WHERE Title ILIKE :playlist_title
                      """)
         result = g.conn.execute(query, {'playlist_title': f'%{playlist_title}%'}).fetchall()
+        print(f"Query result: {result}")  # Debugging log
     else:
         result = []
+        print("No playlist_title provided.")  # Debugging log
 
     # Format the response for React
     playlists = [{
@@ -400,7 +424,58 @@ def api_search_playlist():
         "creationYear": playlist[3]
     } for playlist in result]
 
+    print(f"Playlists response: {playlists}")  # Debugging log
     return jsonify({"playlists": playlists})
+
+
+# Route for displaying playlists.
+@app.route('/api/playlist/<playlist_id>', methods=['GET'])
+def api_playlist_details(playlist_id):
+    # Fetch playlist details
+    playlist_query = text("""
+                          SELECT * FROM Playlist
+                          WHERE PlaylistID = :playlist_id
+                          """)
+    playlist = g.conn.execute(playlist_query, {'playlist_id': playlist_id}).fetchone()
+
+    # Fetch songs in the playlist
+    songs_query = text("""
+                       SELECT Song.* FROM Song
+                       JOIN contains1 ON Song.songID = contains1.songID
+                       WHERE contains1.PlaylistID = :playlist_id
+                       """)
+    songs = g.conn.execute(songs_query, {'playlist_id': playlist_id}).fetchall()
+
+    # Fetch the creator of the playlist
+    creator_query = text("""
+                         SELECT Users.* FROM Users
+                         JOIN CreateORFollow ON Users.UserID = CreateORFollow.UserID
+                         WHERE CreateORFollow.PlaylistID = :playlist_id AND CreateORFollow.Creates = TRUE
+                         """)
+    creator = g.conn.execute(creator_query, {'playlist_id': playlist_id}).fetchone()
+
+    # Fetch the users who follow the playlist
+    followers_query = text("""
+                           SELECT Users.* FROM Users
+                           JOIN CreateORFollow ON Users.UserID = CreateORFollow.UserID
+                           WHERE CreateORFollow.PlaylistID = :playlist_id AND CreateORFollow.Creates = FALSE
+                           """)
+    followers = g.conn.execute(followers_query, {'playlist_id': playlist_id}).fetchall()
+
+    if playlist:
+        playlist_details = {
+            "id": playlist[0].strip(),
+            "title": playlist[1],
+            "description": playlist[2],
+            "creationYear": playlist[3],
+            "creator": {"id": creator[0].strip(), "name": creator[1]} if creator else None,
+            "followers": [{"id": follower[0].strip(), "name": follower[1]} for follower in followers],
+            "songs": [{"id": song[0].strip(), "title": song[1], "duration": song[3]} for song in songs]
+        }
+        return jsonify(playlist_details)
+    else:
+        return jsonify({"error": "Playlist not found"}), 404
+
 
 
 # Route for logging in
@@ -670,46 +745,6 @@ def recommend_playlists(username):
     # 🔥 Step 5: Render the recommended playlists
     return render_template('recommend_playlists.html', playlists=playlists)
 
-
-
-#Route for displaying the playlist's page
-@app.route('/playlist/<playlist_id>')
-def playlist_details(playlist_id):
-    # Fetch playlist details
-    playlist_query = text("""
-                          SELECT * FROM Playlist
-                          WHERE PlaylistID = :playlist_id
-                          """)
-    playlist = g.conn.execute(playlist_query, {'playlist_id': playlist_id}).fetchone()
-
-    # Fetch songs in the playlist
-    songs_query = text("""
-                       SELECT Song.* FROM Song
-                       JOIN contains1 ON Song.songID = contains1.songID
-                       WHERE contains1.PlaylistID = :playlist_id
-                       """)
-    songs = g.conn.execute(songs_query, {'playlist_id': playlist_id}).fetchall()
-
-    # Fetch the creator of the playlist
-    creator_query = text("""
-                         SELECT Users.* FROM Users
-                         JOIN CreateORFollow ON Users.UserID = CreateORFollow.UserID
-                         WHERE CreateORFollow.PlaylistID = :playlist_id AND CreateORFollow.Creates = TRUE
-                         """)
-    creator = g.conn.execute(creator_query, {'playlist_id': playlist_id}).fetchone()
-
-    # Fetch the users who follow the playlist
-    followers_query = text("""
-                           SELECT Users.* FROM Users
-                           JOIN CreateORFollow ON Users.UserID = CreateORFollow.UserID
-                           WHERE CreateORFollow.PlaylistID = :playlist_id AND CreateORFollow.Creates = FALSE
-                           """)
-    followers = g.conn.execute(followers_query, {'playlist_id': playlist_id}).fetchall()
-
-    if playlist:
-        return render_template('playlist_details.html', playlist=playlist, songs=songs, creator=creator, followers=followers)
-    else:
-        return "Playlist not found", 404
     
 
 if __name__ == "__main__":

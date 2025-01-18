@@ -7,7 +7,9 @@ import SearchArtist from './SearchArtist';
 import SearchGenre from './SearchGenre';
 import SearchPlaylist from './SearchPlaylist';
 import AlbumDetails from './AlbumDetails';
-import ArtistDetails from './ArtistDetails'; // Import ArtistDetails
+import ArtistDetails from './ArtistDetails';
+import GenreDetails from './GenreDetails'; 
+import PlaylistDetails from './PlaylistDetails';
 
 function App() {
   return (
@@ -20,10 +22,13 @@ function App() {
         <Route path="/search_genre" element={<SearchGenre />} />
         <Route path="/search_playlist" element={<SearchPlaylist />} />
         <Route path="/album/:albumId" element={<AlbumDetails />} />
-        <Route path="/artist/:artistId" element={<ArtistDetails />} /> {/* Add this route */}
+        <Route path="/artist/:artistId" element={<ArtistDetails />} />
+        <Route path="/genre/:genreId" element={<GenreDetails />} />
+        <Route path="/playlist/:playlistId" element={<PlaylistDetails />} />
       </Routes>
     </Router>
   );
 }
 
 export default App;
+
