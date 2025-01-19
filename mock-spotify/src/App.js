@@ -8,14 +8,18 @@ import SearchGenre from './SearchGenre';
 import SearchPlaylist from './SearchPlaylist';
 import AlbumDetails from './AlbumDetails';
 import ArtistDetails from './ArtistDetails';
-import GenreDetails from './GenreDetails'; 
+import GenreDetails from './GenreDetails';
 import PlaylistDetails from './PlaylistDetails';
+import Login from './Login';
+import Profile from './Profile';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/profile/:username" element={<Profile />} />
         <Route path="/search_song" element={<SearchSong />} />
         <Route path="/search_album" element={<SearchAlbum />} />
         <Route path="/search_artist" element={<SearchArtist />} />
@@ -31,4 +35,3 @@ function App() {
 }
 
 export default App;
-

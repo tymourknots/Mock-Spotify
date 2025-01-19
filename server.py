@@ -4,12 +4,16 @@ from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, abort, session, url_for, jsonify, send_from_directory
 from flask_cors import CORS
+from flask_session import Session
 
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, static_folder='static')
 app.secret_key = os.urandom(24)
-CORS(app)
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
 
 
 DATABASEURI = "postgresql://postgres:trymour@localhost:5432/postgres"
@@ -70,12 +74,12 @@ def serve_react(path=None):
     return send_from_directory('../mock-spotify/build', path)
 
 @app.route('/api/session', methods=['GET'])
-def get_session_data():
-    """
-    Return session data for the logged-in user.
-    """
-    username = session.get('username', None)
-    return jsonify({'username': username})
+def get_session():
+    username = session.get('username')
+    print(f"Session username: {username}")  # Debugging log
+    return jsonify({"username": username}) if username else jsonify({"username": None})
+
+
 
 
 
@@ -478,81 +482,101 @@ def api_playlist_details(playlist_id):
 
 
 
-# Route for logging in
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username'].strip()
-        password = request.form['password'].strip()
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.json
+    print(f"Login payload: {data}")  # Debugging log
 
-        # Check if the username and password match a user in the database
-        user_query = text("SELECT * FROM Users WHERE UserName = :username AND Password = :password")
-        user = g.conn.execute(user_query, {'username': username, 'password': password}).fetchone()
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
 
-        if user:
-            session['username'] = username  
-            return redirect(url_for('index'))
-        else:
-            return redirect(url_for('login'))
+    if not username or not password:
+        return jsonify({"success": False, "message": "Username or password is missing"}), 400
 
-    return render_template('login.html')
+    user_query = text("SELECT * FROM Users WHERE UserName = :username AND Password = :password")
+    user = g.conn.execute(user_query, {'username': username, 'password': password}).fetchone()
+
+    if user:
+        session['username'] = username  # Save username in session
+        print(f"User logged in: {username}")  # Debugging log
+        return jsonify({"success": True, "message": "Login successful", "username": username})
+    else:
+        print("Invalid login attempt")  # Debugging log
+        return jsonify({"success": False, "message": "Invalid username or password"}), 401
+
+
+
 
 # Route for logging out
-@app.route('/logout')
-def logout():
-    # Remove the username from the session
-    session.pop('username', None)  
-    return redirect(url_for('index'))
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    session.pop('username', None)  # Clear the session
+    return jsonify({"message": "Logged out successfully"}), 200
+
 
 # Route for displaying the user's profile after logging in
-@app.route('/profile/<username>')
-def profile(username):
-    if 'username' in session and session['username'] == username:
-        user_query = text("SELECT * FROM Users WHERE UserName = :username")
-        user = g.conn.execute(user_query, {'username': username}).fetchone()
+@app.route('/api/profile/<username>', methods=['GET'])
+def api_profile(username):
+    user_query = text("SELECT * FROM Users WHERE UserName = :username")
+    user = g.conn.execute(user_query, {'username': username}).fetchone()
 
-        if user:
-            user_id = user[3]  # Extract userID
-            print(f"User ID: {user_id} for username: {username}")
+    if user:
+        # Corrected indices based on your schema
+        username = user[0]  # First column is username
+        email = user[1]     # Second column is email
+        user_id = user[3]   # Fourth column is userID
 
-            # Listened Songs
-            listens_to_query = text("""
-                SELECT Song.* FROM Song
-                JOIN listensTO ON Song.songID = listensTO.songID
-                WHERE listensTO.userid = :user_id
-            """)
-            listened_songs = g.conn.execute(listens_to_query, {'user_id': user_id}).fetchall()
+        # Fetch songs listened to by the user
+        listens_to_query = text("""
+            SELECT Song.songID, Song.Title, Song.Genre 
+            FROM listensTO
+            JOIN Song ON listensTO.songID = Song.songID
+            WHERE listensTO.userID = :user_id
+        """)
+        songs = g.conn.execute(listens_to_query, {'user_id': user_id}).fetchall()
 
-            # Followed Artists
-            followed_artists_query = text("""
-                SELECT Artist.*, follows.FollowDate
-                FROM follows
-                JOIN Artist ON follows.artistID = Artist.artistID
-                WHERE follows.userid = :user_id
-            """)
-            followed_artists = g.conn.execute(followed_artists_query, {'user_id': user_id}).fetchall()
+        # Fetch artists followed by the user
+        follows_query = text("""
+            SELECT Artist.ArtistID, Artist.Name, follows.FollowDate
+            FROM follows
+            JOIN Artist ON follows.artistID = Artist.artistID
+            WHERE follows.userID = :user_id
+        """)
+        artists = g.conn.execute(follows_query, {'user_id': user_id}).fetchall()
 
-            # Created Playlists
-            created_playlists_query = text("""
-                SELECT Playlist.* FROM Playlist
-                JOIN createORfollow ON Playlist.PlaylistID = createORfollow.PlaylistID
-                WHERE createORfollow.userid = :user_id AND createORfollow.creates = TRUE
-            """)
-            created_playlists = g.conn.execute(created_playlists_query, {'user_id': user_id}).fetchall()
+        # Fetch playlists created by the user
+        created_playlists_query = text("""
+            SELECT Playlist.PlaylistID, Playlist.Title 
+            FROM createORfollow
+            JOIN Playlist ON createORfollow.PlaylistID = Playlist.PlaylistID
+            WHERE createORfollow.userID = :user_id AND createORfollow.creates = TRUE
+        """)
+        created_playlists = g.conn.execute(created_playlists_query, {'user_id': user_id}).fetchall()
 
-            # Followed Playlists
-            followed_playlists_query = text("""
-                SELECT Playlist.* FROM Playlist
-                JOIN createORfollow ON Playlist.PlaylistID = createORfollow.PlaylistID
-                WHERE createORfollow.userid = :user_id AND createORfollow.creates = FALSE
-            """)
-            followed_playlists = g.conn.execute(followed_playlists_query, {'user_id': user_id}).fetchall()
+        # Fetch playlists followed by the user
+        followed_playlists_query = text("""
+            SELECT Playlist.PlaylistID, Playlist.Title 
+            FROM createORfollow
+            JOIN Playlist ON createORfollow.PlaylistID = Playlist.PlaylistID
+            WHERE createORfollow.userID = :user_id AND createORfollow.creates = FALSE
+        """)
+        followed_playlists = g.conn.execute(followed_playlists_query, {'user_id': user_id}).fetchall()
 
-            return render_template('profile.html', user=user, songs=listened_songs, artists=followed_artists, created_playlists=created_playlists, followed_playlists=followed_playlists)
-        else:
-            return "User not found", 404
+        # Format response
+        return jsonify({
+            "user": {"username": username, "email": email},
+            "songs": [{"id": song[0], "title": song[1], "genre": song[2]} for song in songs],
+            "artists": [{"id": artist[0], "name": artist[1], "followDate": artist[2]} for artist in artists],
+            "createdPlaylists": [{"id": playlist[0], "title": playlist[1]} for playlist in created_playlists],
+            "followedPlaylists": [{"id": playlist[0], "title": playlist[1]} for playlist in followed_playlists],
+        })
     else:
-        return redirect(url_for('login'))
+        return jsonify({"error": "User not found"}), 404
+
+
+
+
+
 
     
 # Route for the recommended songs button on the user's profile page
