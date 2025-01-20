@@ -6,10 +6,9 @@ This project is a full-stack web application that mimics Spotify's basic feature
 
 ## Video Demonstration
 
-[![Mock Spotify Video Demonstration](https://img.youtube.com/vi/Nk71oJdapdo/0.jpg)](https://www.youtube.com/watch?v=Nk71oJdapdo)
+[Click here to watch the video demonstration on YouTube](https://youtu.be/Nk71oJdapdo)
 
-Click the image above to watch the video demonstration on YouTube.
-
+---
 
 ## Lessons Learned
 
