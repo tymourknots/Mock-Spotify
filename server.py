@@ -10,7 +10,7 @@ from flask_session import Session
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, static_folder='static')
 app.secret_key = os.urandom(24)
-CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
@@ -581,31 +581,25 @@ def api_profile(username):
     
 # Route for the recommended songs button on the user's profile page
 # Route for the recommended songs button on the user's profile page
-@app.route('/recommendations/<username>')
-def recommendations(username):
-    print(f"Username for recommendations: '{username}' (Type: {type(username)})")  # Debug log
-
-    # 🔥 Step 1: Get the user_id from the Users table
+@app.route('/api/recommendations/<username>', methods=['GET'])
+def api_recommendations(username):
     user_query = text("SELECT TRIM(userID) FROM Users WHERE UserName = :username")
     user = g.conn.execute(user_query, {'username': username}).fetchone()
-    
-    if not user:
-        print(f"User {username} not found in Users table")
-        return "User not found"
-    
-    user_id = user[0]  # Extract user_id and trim
-    print(f"User ID for recommendations: '{user_id}' (Type: {type(user_id)})")  # Debug log
 
-    # 🔥 Step 2: Get the songs the user has already listened to
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    user_id = user[0]
+    
+    # Fetch listened songs
     listened_songs_query = text("""
         SELECT TRIM(songID)
         FROM listensTO
         WHERE TRIM(userID) = :user_id
     """)
     listened_song_ids = [song[0] for song in g.conn.execute(listened_songs_query, {'user_id': user_id}).fetchall()]
-    print(f"Listened songs for user {user_id}: {listened_song_ids}")  # Debug log
 
-    # 🔥 Step 3: Get the genres the user follows
+    # Fetch followed genres
     genre_query = text("""
         SELECT DISTINCT TRIM(Genre.Name)
         FROM Artist
@@ -614,108 +608,107 @@ def recommendations(username):
         JOIN Genre ON TRIM(belongsTo2.GenreID) = TRIM(Genre.GenreID)
         WHERE TRIM(follows.userID) = :user_id
     """)
-    followed_genres = g.conn.execute(genre_query, {'user_id': user_id}).fetchall()
-    print(f"Genres followed by User {user_id}: {followed_genres}")  # Debug log
+    followed_genres = [genre[0] for genre in g.conn.execute(genre_query, {'user_id': user_id}).fetchall()]
 
     if not followed_genres:
-        print(f"No genres found for user {user_id}")
-        return "No genres found for this user"
+        return jsonify({"songs": [], "message": "No followed genres"}), 200
 
-    # 🔥 Step 4: Get songs in those genres that the user has NOT listened to
+    # Fetch recommendations
     recommended_songs = []
-    for genre in followed_genres:
-        genre_name = genre[0].strip()
-        if not genre_name:
-            continue
-
-        print(f"Processing Genre: {genre_name}")  # Debug log
-
+    for genre_name in followed_genres:
         song_query = text("""
-            SELECT *
-            FROM (
-                SELECT Song.*, TRIM(Artist.Name) AS ArtistName, TRIM(Artist.ArtistID)
-                FROM Song
-                JOIN contains2 ON TRIM(Song.songID) = TRIM(contains2.songID)
-                JOIN albumBelong ON TRIM(contains2.AlbumID) = TRIM(albumBelong.AlbumID)
-                JOIN Artist ON TRIM(albumBelong.ArtistID) = TRIM(Artist.ArtistID)
-                WHERE TRIM(Song.Genre) = :genre
-                AND TRIM(Song.songID) NOT IN :listened_song_ids
-            ) AS distinct_songs
-            ORDER BY RANDOM()
+            SELECT Song.songID, Song.Title, Song.Genre, Artist.Name AS ArtistName
+            FROM Song
+            JOIN contains2 ON Song.songID = contains2.songID
+            JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+            JOIN Artist ON albumBelong.ArtistID = Artist.ArtistID
+            WHERE Song.Genre = :genre
+            AND Song.songID NOT IN :listened_song_ids
             LIMIT 5
         """)
-
         songs = g.conn.execute(song_query, {
             'genre': genre_name,
-            'listened_song_ids': tuple(listened_song_ids) if listened_song_ids else ('',)  # Avoid empty IN clause
+            'listened_song_ids': tuple(listened_song_ids) if listened_song_ids else ('',)
         }).fetchall()
-        
-        print(f"Songs recommended for User {user_id} in Genre {genre_name}: {songs}")  # Debug log
         recommended_songs.extend(songs)
 
-    return render_template('recommendations.html', songs=recommended_songs)
+    return jsonify({
+        "songs": [{"id": song[0], "title": song[1], "genre": song[2], "artist": song[3]} for song in recommended_songs]
+    })
 
 
 
 
 # Route for the recommended artists button on the user's profile page
-@app.route('/recommend_artists/<username>')
+@app.route('/recommend_artists/<username>', methods=['GET'])
 def recommend_artists(username):
-    print(f"Username for recommendations: '{username}' (Type: {type(username)})")  # Debug log
+    print(f"Username for recommendations: '{username}'")
 
-    # 🔥 Step 1: Get the user_id from the Users table
-    user_query = text("SELECT TRIM(userID) FROM Users WHERE UserName = :username")
+    # Get the user_id
+    user_query = text("SELECT userID FROM Users WHERE UserName = :username")
     user = g.conn.execute(user_query, {'username': username}).fetchone()
-    
+
     if not user:
         print(f"User {username} not found in Users table")
-        return "User not found"
-    
-    user_id = user[0].strip()  # Remove whitespace
-    print(f"User ID for recommendations: '{user_id}' (Type: {type(user_id)})")  # Debug log
-    
-    # 🔥 Step 2: Get genres the user follows
+        return jsonify({"error": "User not found"}), 404
+
+    user_id = user[0]
+    print(f"User ID for recommendations: '{user_id}'")
+
+    # Get genres the user follows
     genre_query = text("""
-        SELECT DISTINCT TRIM(Genre.GenreID)
+        SELECT DISTINCT Genre.GenreID
         FROM Artist
-        JOIN follows ON TRIM(Artist.ArtistID) = TRIM(follows.ArtistID)
-        JOIN belongsTo2 ON TRIM(Artist.ArtistID) = TRIM(belongsTo2.ArtistID)
-        JOIN Genre ON TRIM(belongsTo2.GenreID) = TRIM(Genre.GenreID)
-        WHERE TRIM(follows.userID) = :user_id
+        JOIN follows ON Artist.ArtistID = follows.ArtistID
+        JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+        JOIN Genre ON belongsTo2.GenreID = Genre.GenreID
+        WHERE follows.userID = :user_id
     """)
     followed_genres = g.conn.execute(genre_query, {'user_id': user_id}).fetchall()
-    print(f"Genres Followed for User {user_id}: {followed_genres}")  # Debug log
 
     if not followed_genres:
-        print(f"No genres found for user {user_id}")
-        return "No genres found for this user"
+        print(f"No genres followed by user {user_id}")
+        return jsonify({"message": "No genres found for this user", "artists": []}), 200
 
-    # 🔥 Step 3: Get artists in those genres that the user does not follow
+    print(f"Genres followed by User {user_id}: {followed_genres}")
+
+    # Get artists not followed by the user
     recommended_artists = []
     for genre in followed_genres:
-        if not genre[0]:
-            continue
+        genre_id = genre[0].strip()
 
-        print(f"Processing Genre: {genre[0]}")  # Debug log
+        print(f"Processing Genre ID: {genre_id}")
+
         artist_query = text("""
-            SELECT DISTINCT Artist.*
+            SELECT DISTINCT Artist.ArtistID, Artist.Name, Artist.Biography
             FROM Artist
-            JOIN belongsTo2 ON TRIM(Artist.ArtistID) = TRIM(belongsTo2.ArtistID)
-            WHERE TRIM(belongsTo2.GenreID) = :genre_id 
+            JOIN belongsTo2 ON Artist.ArtistID = belongsTo2.ArtistID
+            WHERE belongsTo2.GenreID = :genre_id
             AND NOT EXISTS (
-                SELECT 1 FROM Follows 
-                WHERE TRIM(Follows.ArtistID) = TRIM(Artist.ArtistID) 
-                AND TRIM(Follows.userID) = :user_id
+                SELECT 1 FROM follows
+                WHERE follows.ArtistID = Artist.ArtistID AND follows.userID = :user_id
             )
             LIMIT 5
         """)
-        
-        artists = g.conn.execute(artist_query, {'genre_id': genre[0].strip(), 'user_id': user_id}).fetchall()
-        print(f"Artists recommended for User {user_id} in Genre {genre[0].strip()}: {artists}")  # Debug log
+        artists = g.conn.execute(artist_query, {'genre_id': genre_id, 'user_id': user_id}).fetchall()
 
-        recommended_artists.extend(artists)
+        if not artists:
+            print(f"No artists found for Genre ID: {genre_id}")
+        else:
+            print(f"Artists found for Genre ID {genre_id}: {artists}")
 
-    return render_template('recommend_artists.html', artists=recommended_artists)
+        for artist in artists:
+            recommended_artists.append({
+                "id": artist[0].strip(),  # Artist ID
+                "name": artist[1],  # Artist Name
+                "biography": artist[2]  # Artist Biography
+            })
+
+    print(f"Final Recommended Artists: {recommended_artists}")
+    return jsonify({"artists": recommended_artists})
+
+
+
 
 
 
@@ -723,51 +716,48 @@ def recommend_artists(username):
 
 #Route for the recommended playlists button on the user's profile page
 # Route for the recommended playlists button on the user's profile page
-@app.route('/recommend_playlists/<username>')
+@app.route('/recommend_playlists/<username>', methods=['GET'])
 def recommend_playlists(username):
-    print(f"Username for playlist recommendations: '{username}' (Type: {type(username)})")  # Debug log
+    print(f"Username for playlist recommendations: '{username}'")
 
-    # 🔥 Step 1: Get the user_id from the Users table
-    user_query = text("SELECT TRIM(userID) FROM Users WHERE UserName = :username")
+    # Step 1: Get the user_id
+    user_query = text("SELECT userID FROM Users WHERE UserName = :username")
     user = g.conn.execute(user_query, {'username': username}).fetchone()
-    
+
     if not user:
         print(f"User {username} not found in Users table")
-        return "User not found"
-    
-    user_id = user[0]  # Extract user_id and trim
-    print(f"User ID for playlist recommendations: '{user_id}' (Type: {type(user_id)})")  # Debug log
+        return jsonify({"error": "User not found"}), 404
 
-    # 🔥 Step 2: Fetch the artists followed by the user
-    artist_query = text("""
-        SELECT TRIM(ArtistID) 
-        FROM follows 
-        WHERE TRIM(userID) = :user_id
-    """)
+    user_id = user[0]
+    print(f"User ID for playlist recommendations: '{user_id}'")
+
+    # Step 2: Fetch followed artists
+    artist_query = text("SELECT ArtistID FROM follows WHERE userID = :user_id")
     followed_artists = g.conn.execute(artist_query, {'user_id': user_id}).fetchall()
-    print(f"Followed Artists for User {user_id}: {followed_artists}")  # Debug log
-
-    # 🔥 Step 3: Convert followed artists to a list of artist IDs
-    artist_ids = [artist[0].strip() for artist in followed_artists]
+    artist_ids = [artist[0] for artist in followed_artists]
 
     if not artist_ids:
         print(f"No artists followed for user {user_id}")
-        return "No artists followed, so no playlist recommendations available."
+        return jsonify({"message": "No followed artists, no playlist recommendations available", "playlists": []}), 200
 
-    # 🔥 Step 4: Fetch playlists that contain songs by these artists
+    print(f"Followed artists for user {user_id}: {artist_ids}")
+
+    # Step 3: Fetch recommended playlists
     playlist_query = text("""
         SELECT DISTINCT Playlist.PlaylistID, Playlist.Title
         FROM Playlist
-        JOIN contains1 ON TRIM(Playlist.PlaylistID) = TRIM(contains1.PlaylistID)
-        JOIN contains2 ON TRIM(contains1.songID) = TRIM(contains2.songID)
-        JOIN albumBelong ON TRIM(contains2.AlbumID) = TRIM(albumBelong.AlbumID)
-        WHERE TRIM(albumBelong.ArtistID) IN :artist_ids
+        JOIN contains1 ON Playlist.PlaylistID = contains1.PlaylistID
+        JOIN contains2 ON contains1.songID = contains2.songID
+        JOIN albumBelong ON contains2.AlbumID = albumBelong.AlbumID
+        WHERE albumBelong.ArtistID IN :artist_ids
     """)
     playlists = g.conn.execute(playlist_query, {'artist_ids': tuple(artist_ids)}).fetchall()
-    print(f"Playlists for User {user_id}: {playlists}")  # Debug log
 
-    # 🔥 Step 5: Render the recommended playlists
-    return render_template('recommend_playlists.html', playlists=playlists)
+    recommended_playlists = [{"id": playlist[0].strip(), "title": playlist[1]} for playlist in playlists]
+    print(f"Recommended playlists for user {user_id}: {recommended_playlists}")
+
+    return jsonify({"playlists": recommended_playlists})
+
 
     
 
