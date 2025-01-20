@@ -1,5 +1,4 @@
 import os
-  # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, abort, session, url_for, jsonify, send_from_directory

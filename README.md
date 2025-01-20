@@ -4,6 +4,17 @@
 
 This project is a full-stack web application that mimics Spotify's basic features. Initially built with Flask for the backend and vanilla HTML for the frontend, the application has been upgraded to use React for the frontend, providing a more dynamic and modern user experience. This project taught me valuable lessons about database design, full-stack development, and bridging the gap between backend logic and interactive UIs.
 
+## Video Demonstration
+
+<div align="center">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/Nk71oJdapdo" 
+          title="Mock Spotify Video Demonstration" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+  </iframe>
+</div>
+
+---
+
 ## Lessons Learned
 
 ### React Integration
