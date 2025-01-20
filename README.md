@@ -6,14 +6,10 @@ This project is a full-stack web application that mimics Spotify's basic feature
 
 ## Video Demonstration
 
-<div align="center">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/Nk71oJdapdo" 
-          title="Mock Spotify Video Demonstration" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-          allowfullscreen>
-  </iframe>
-</div>
+[![Mock Spotify Video Demonstration](https://img.youtube.com/vi/Nk71oJdapdo/0.jpg)](https://www.youtube.com/watch?v=Nk71oJdapdo)
 
----
+Click the image above to watch the video demonstration on YouTube.
+
 
 ## Lessons Learned
 
