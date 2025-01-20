@@ -1,13 +1,158 @@
+/* General Body Styling */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background-color: #121212; /* Spotify Black */
+  color: #ffffff; /* White text for dark mode */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Links */
+a {
+  text-decoration: none;
+  color: #1DB954; /* Spotify Green */
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #1ED760; /* Slightly lighter green for hover effect */
+}
+
+/* Buttons */
+button {
+  background-color: #1DB954; /* Spotify Green */
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #1ED760; /* Lighter Spotify Green */
+}
+
+/* Main Container */
+.home-container,
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Headers */
+h1,
+h2,
+h3 {
+  color: #ffffff;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+}
+
+/* Forms */
+form {
+  margin-bottom: 20px;
+}
+
+input[type="text"] {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  background-color: #222222;
+  border: 1px solid #333333;
+  border-radius: 5px;
+  color: #ffffff;
+}
+
+input[type="text"]::placeholder {
+  color: #888888; /* Placeholder text color */
+}
+
+/* List Items */
+.song-item,
+.artist-item,
+.playlist-item {
+  background-color: #1a1a1a; /* Dark gray for items */
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #333333; /* Subtle border */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.song-item:hover,
+.artist-item:hover,
+.playlist-item:hover {
+  background-color: #333333; /* Slightly lighter gray on hover */
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 15px 0;
+  background-color: #000000; /* Black footer */
+  color: #ffffff;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+footer button {
+  margin: 5px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .home-container,
+  .profile-container {
+    padding: 15px;
+  }
+
+  button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Additional Styling for Search Forms */
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.input-field {
+  flex: 1;
+  padding: 10px;
+  background-color: #222222;
+  border: 1px solid #333333;
+  border-radius: 5px;
+  color: #ffffff;
+}
+
+.input-field::placeholder {
+  color: #888888;
 }
